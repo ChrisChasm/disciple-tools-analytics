@@ -11,6 +11,7 @@
  *
  */
 
+
 add_action('admin_menu', 'dt_analytics_menu');
 
 function dt_analytics_menu () {
@@ -25,7 +26,7 @@ function dt_analytics_page () {
     require_once ( 'vendor/autoload.php');
 
     $client = new Google_Client();
-    $client->setApplicationName("Client_Library_Examples");
+    $client->setApplicationName("Disciple_Tools");
     $client->setDeveloperKey("AIzaSyBsO2bPxOP7hlL3Owo0VvqJmE9WN1mBUu8");
 
     $service = new Google_Service_Books($client);
@@ -35,10 +36,11 @@ function dt_analytics_page () {
     foreach ($results as $item) {
         $html .= $item['volumeInfo']['title'] . '<br />';
     }
-    /* END WORKING EXAMPLE */
+
 
 
     echo $html;
 }
+
 
 
