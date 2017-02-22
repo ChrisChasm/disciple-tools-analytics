@@ -67,50 +67,50 @@
 
                 </tr>
 
-                <tr valign="top">
+                <!--<tr valign="top">
 
                     <th scope="row">
                         <div class="checkbox">
-                            <label class="ga_checkbox_label <?php echo ( ! Ga_Helper::are_features_enabled() ) ? 'label-grey ga-tooltip' : '' ?>"
+                            <label class="ga_checkbox_label <?php /*echo ( ! Ga_Helper::are_features_enabled() ) ? 'label-grey ga-tooltip' : '' */?>"
                                    for="ga_enter_code_manually"> <input
-			                        <?php if ( Ga_Helper::are_features_enabled() ) : ?>
-                                        onclick="ga_events.click( this, ga_events.codeManuallyCallback( <?php echo Ga_Helper::are_features_enabled() ? 1 : 0; ?> ) )"
-			                        <?php endif; ?>
+			                        <?php /*if ( Ga_Helper::are_features_enabled() ) : */?>
+                                        onclick="ga_events.click( this, ga_events.codeManuallyCallback( <?php /*echo Ga_Helper::are_features_enabled() ? 1 : 0; */?> ) )"
+			                        <?php /*endif; */?>
                                         type="checkbox"
-			                        <?php echo ( ! Ga_Helper::are_features_enabled() ) ? 'disabled="disabled"' : ''; ?>
-                                        name="<?php echo esc_attr( Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME ); ?>"
+			                        <?php /*echo ( ! Ga_Helper::are_features_enabled() ) ? 'disabled="disabled"' : ''; */?>
+                                        name="<?php /*echo esc_attr( Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME ); */?>"
                                         id="ga_enter_code_manually"
                                         value="1"
-			                        <?php // echo( ( $data[ Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME ] || ! Ga_Helper::are_terms_accepted() ) ? 'checked="checked"' : '' ); ?>/>&nbsp;
-		                        <?php _e( 'Manually enter Tracking ID' ) ?>
-                                <span class="ga-tooltiptext ga-tt-abs"><?php _e( $tooltip ); ?></span>
+			                        <?php /*// echo( ( $data[ Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME ] || ! Ga_Helper::are_terms_accepted() ) ? 'checked="checked"' : '' ); */?>/>&nbsp;
+		                        <?php /*_e( 'Manually enter Tracking ID' ) */?>
+                                <span class="ga-tooltiptext ga-tt-abs"><?php /*_e( $tooltip ); */?></span>
                             </label>
-	                        <?php if ( ! Ga_Helper::are_features_enabled() ) : ?>
+	                        <?php /*if ( ! Ga_Helper::are_features_enabled() ) : */?>
                                 <input id="ga_enter_code_manually_hidden" type="hidden"
-                                       name="<?php echo esc_attr( Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME ); ?>"
+                                       name="<?php /*echo esc_attr( Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME ); */?>"
                                        value="1"/>
-	                        <?php endif; ?>
+	                        <?php /*endif; */?>
                         </div>
                     </th>
                     <td></td>
-                </tr>
-                <tr valign="top"
-                    id="ga_manually_wrapper" <?php echo( ( $data[ Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME ] || ! Ga_Helper::are_features_enabled() ) ? '' : 'style="display: none"' ); ?> >
+                </tr>-->
+                <!--<tr valign="top"
+                    id="ga_manually_wrapper" <?php /*echo( ( $data[ Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME ] || ! Ga_Helper::are_features_enabled() ) ? '' : 'style="display: none"' ); */?> >
 
-                    <th scope="row"><?php _e( 'Tracking ID' ) ?>:</th>
+                    <th scope="row"><?php /*_e( 'Tracking ID' ) */?>:</th>
                     <td>
                         <input type="text"
-                               name="<?php echo esc_attr( Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME ); ?>"
-                               value="<?php echo esc_attr( $data[ Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME ] ); ?>"
+                               name="<?php /*echo esc_attr( Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME ); */?>"
+                               value="<?php /*echo esc_attr( $data[ Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME ] ); */?>"
                                id="ga_manually_input"/>&nbsp;
                         <div class="ga_warning">
-                            <strong><?php _e( 'Warning' ); ?></strong>:&nbsp;<?php _e( 'If you enter your Tracking ID manually, Analytics statistics will not be shown.' ); ?>
+                            <strong><?php /*_e( 'Warning' ); */?></strong>:&nbsp;<?php /*_e( 'If you enter your Tracking ID manually, Analytics statistics will not be shown.' ); */?>
                             <br>
-	                        <?php _e( 'We strongly recommend to authenticate with Google using the button above.' ); ?>
+	                        <?php /*_e( 'We strongly recommend to authenticate with Google using the button above.' ); */?>
                         </div>
                     </td>
 
-                </tr>
+                </tr>-->
 
                 <tr valign="top" id="ga_roles_wrapper">
                     <th scope="row">
