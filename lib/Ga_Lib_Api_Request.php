@@ -4,11 +4,11 @@ class Ga_Lib_Api_Request {
 
 	static $instance = null;
 
-	const HEADER_CONTENT_TYPE		 = "application/x-www-form-urlencoded";
-	const HEADER_CONTENT_TYPE_JSON = "Content-type: application/json";
-	const HEADER_ACCEPT			 = "Accept: application/json, text/javascript, */*; q=0.01";
-	const TIMEOUT					 = 5;
-	const USER_AGENT				 = 'googleanalytics-wordpress-plugin';
+	const HEADER_CONTENT_TYPE		    = "application/x-www-form-urlencoded";
+	const HEADER_CONTENT_TYPE_JSON      = "Content-type: application/json";
+	const HEADER_ACCEPT			        = "Accept: application/json, text/javascript, */*; q=0.01";
+	const TIMEOUT					    = 5;
+	const USER_AGENT				    = 'googleanalytics-wordpress-plugin';
 
 	private $headers = array();
 

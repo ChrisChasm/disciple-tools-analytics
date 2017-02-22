@@ -180,9 +180,9 @@ class Ga_Admin
     public static function admin_menu_googleanalytics()
     {
         if (current_user_can('manage_options')) {
-            add_menu_page('Google Analytics', 'Google Analytics', 'manage_options', 'googleanalytics', 'Ga_Admin::statistics_page_googleanalytics', 'dashicons-chart-line', 1000);
-            add_submenu_page('googleanalytics', 'Google Analytics', __('Dashboard'), 'manage_options', 'googleanalytics', 'Ga_Admin::statistics_page_googleanalytics');
-            add_submenu_page('googleanalytics', 'Google Analytics', __('Settings'), 'manage_options', 'googleanalytics/settings', 'Ga_Admin::options_page_googleanalytics');
+            add_menu_page('DTools Analytics', 'DTools Analytics', 'manage_options', 'googleanalytics', 'Ga_Admin::statistics_page_googleanalytics', 'dashicons-chart-line', 1000);
+            add_submenu_page('googleanalytics', 'DTools Analytics', __('Dashboard'), 'manage_options', 'googleanalytics', 'Ga_Admin::statistics_page_googleanalytics');
+            add_submenu_page('googleanalytics', 'DTools Analytics', __('Settings'), 'manage_options', 'googleanalytics/settings', 'Ga_Admin::options_page_googleanalytics');
         }
     }
 

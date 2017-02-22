@@ -4,13 +4,13 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 
 	static $instance = null;
 
-	const OAUTH2_REVOKE_ENDPOINT = 'https://accounts.google.com/o/oauth2/revoke';
-	const OAUTH2_TOKEN_ENDPOINT = 'https://accounts.google.com/o/oauth2/token';
-	const OAUTH2_AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/auth';
-	const OAUTH2_FEDERATED_SIGNON_CERTS_ENDPOINT = 'https://www.googleapis.com/oauth2/v1/certs';
-	const GA_ACCOUNT_SUMMARIES_ENDPOINT = 'https://www.googleapis.com/analytics/v3/management/accountSummaries';
-	const GA_DATA_ENDPOINT = 'https://analyticsreporting.googleapis.com/v4/reports:batchGet';
-	const OAUTH2_CALLBACK_URI = 'urn:ietf:wg:oauth:2.0:oob';
+	const OAUTH2_REVOKE_ENDPOINT                    = 'https://accounts.google.com/o/oauth2/revoke';
+	const OAUTH2_TOKEN_ENDPOINT                     = 'https://accounts.google.com/o/oauth2/token';
+	const OAUTH2_AUTH_ENDPOINT                      = 'https://accounts.google.com/o/oauth2/auth';
+	const OAUTH2_FEDERATED_SIGNON_CERTS_ENDPOINT    = 'https://www.googleapis.com/oauth2/v1/certs';
+	const GA_ACCOUNT_SUMMARIES_ENDPOINT             = 'https://www.googleapis.com/analytics/v3/management/accountSummaries';
+    const GA_DATA_ENDPOINT                          = 'https://analyticsreporting.googleapis.com/v4/reports:batchGet';
+	const OAUTH2_CALLBACK_URI                       = 'urn:ietf:wg:oauth:2.0:oob';
 
 	const USE_CACHE = true;
 
@@ -21,14 +21,22 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 	 *
 	 * @var array
 	 */
-	private $config = array(
-		'access_type'      => 'offline',
-		'application_name' => 'Google Analytics',
-		'client_id'        => '207216681371-433ldmujuv4l0743c1j7g8sci57cb51r.apps.googleusercontent.com',
-		'client_secret'    => 'y0B-K-ODB1KZOam50aMEDhyc',
-		'scopes'           => array( 'https://www.googleapis.com/auth/analytics.readonly' ),
-		'approval_prompt'  => 'force'
-	);
+//	private $config = array(
+//		'access_type'      => 'offline',
+//		'application_name' => 'Google Analytics',
+//		'client_id'        => '207216681371-433ldmujuv4l0743c1j7g8sci57cb51r.apps.googleusercontent.com',
+//		'client_secret'    => 'y0B-K-ODB1KZOam50aMEDhyc',
+//		'scopes'           => array( 'https://www.googleapis.com/auth/analytics.readonly' ),
+//		'approval_prompt'  => 'force'
+//	);
+    private $config = array(
+        'access_type'      => 'offline',
+        'application_name' => 'disciple-tools-analytics',
+        'client_id'        => '2811303664-nah7tp76gcag3a8tqmpbjpi2uclnu9s3.apps.googleusercontent.com',
+        'client_secret'    => '0SIt_In76P3SM8RznEEVPcod',
+        'scopes'           => array( 'https://www.googleapis.com/auth/analytics.readonly' ),
+        'approval_prompt'  => 'force'
+    );
 
 	/**
 	 * Keeps Access Token information.
