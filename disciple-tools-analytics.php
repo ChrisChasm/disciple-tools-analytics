@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Disciple Tools Analytics
+ * Plugin Name: Disciple Tools - Analytics
  * Plugin URI:
  * Description: Disciple Tools -  Google Analytics Integration
  *
