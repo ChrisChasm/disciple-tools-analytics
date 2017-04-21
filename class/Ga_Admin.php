@@ -3,14 +3,17 @@
 class Ga_Admin
 {
 
+    //stores the selected account id
     const GA_WEB_PROPERTY_ID_OPTION_NAME = 'googleanalytics_web_property_id';
     const GA_EXCLUDE_ROLES_OPTION_NAME = 'googleanalytics_exclude_roles';
     const GA_HIDE_TERMS_OPTION_NAME = 'googleanalytics_hide_terms';
     const GA_VERSION_OPTION_NAME = 'googleanalytics_version';
     const GA_SELECTED_ACCOUNT = 'googleanalytics_selected_account';
     const GA_OAUTH_AUTH_CODE_OPTION_NAME = 'googleanalytics_oauth_auth_code';
+    //stores the access token and the refresh token
     const GA_OAUTH_AUTH_TOKEN_OPTION_NAME = 'googleanalytics_oauth_auth_token';
     const GA_ACCOUNT_DATA_OPTION_NAME = 'googleanalytics_account_data';
+    //manually not used
     const GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME           = 'googleanalytics_web_property_id_manually';
     const GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME  = 'googleanalytics_web_property_id_manually_value';
     const MIN_WP_VERSION = '3.8';
@@ -18,6 +21,9 @@ class Ga_Admin
     const NOTICE_WARNING = 'warning';
     const NOTICE_ERROR = 'error';
     const GA_HEARTBEAT_API_CACHE_UPDATE = false;
+
+    const GA_ACCOUNT_AND_DATA_ARRAY = 'googleanalytics_accounts_and_data';
+    const GA_SELECTED_VIEWS = 'googleanalytics_selected_views';
 
     /**
      * Instantiate API client.
@@ -49,6 +55,8 @@ class Ga_Admin
     {
         add_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME, Ga_Helper::GA_DEFAULT_WEB_ID);
         add_option(self::GA_EXCLUDE_ROLES_OPTION_NAME, wp_json_encode(array()));
+        add_option(self::GA_ACCOUNT_AND_DATA_ARRAY, wp_json_encode(array()));
+        add_option(self::GA_SELECTED_VIEWS, wp_json_encode(array()));
         add_option(self::GA_HIDE_TERMS_OPTION_NAME, false);
         add_option(self::GA_VERSION_OPTION_NAME);
         add_option(self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
@@ -68,6 +76,8 @@ class Ga_Admin
     {
         delete_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME);
         delete_option(self::GA_EXCLUDE_ROLES_OPTION_NAME);
+        delete_option(self::GA_ACCOUNT_AND_DATA_ARRAY);
+        delete_option(self::GA_SELECTED_VIEWS);
         delete_option(self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
         delete_option(self::GA_OAUTH_AUTH_TOKEN_OPTION_NAME);
         delete_option(self::GA_ACCOUNT_DATA_OPTION_NAME);
@@ -119,8 +129,33 @@ class Ga_Admin
         update_option(self::GA_VERSION_OPTION_NAME, GOOGLEANALYTICS_VERSION);
     }
 
+    public static function preupdate_selected_views($new_value, $old_value)
+    {
+        $data = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, array()));
+        foreach ($data as $account_email => $account){
+            foreach($account->account_summaries as $account_summary){
+                foreach ($account_summary->webProperties as $property){
+                    foreach ($property->profiles as $profile){
+                        if (array_key_exists($profile->id, $new_value)){
+                            $profile->include_in_stats = true;
+                        } else {
+                            $profile->include_in_stats = false;
+                        }
+                    }
+                }
+            }
+        }
+        update_option(self::GA_ACCOUNT_AND_DATA_ARRAY, json_encode($data));
+
+
+        return wp_json_encode($new_value);
+    }
+
     public static function preupdate_exclude_roles($new_value, $old_value)
     {
+
+        print_r($new_value);
+        update_option("test", json_encode($new_value));
         if (!Ga_Helper::are_features_enabled()) {
             return '';
         }
@@ -167,11 +202,13 @@ class Ga_Admin
         register_setting(GA_NAME, self::GA_WEB_PROPERTY_ID_OPTION_NAME);
         register_setting(GA_NAME, self::GA_EXCLUDE_ROLES_OPTION_NAME);
         register_setting(GA_NAME, self::GA_SELECTED_ACCOUNT);
+        register_setting(GA_NAME, self::GA_SELECTED_VIEWS);
         register_setting(GA_NAME, self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
         register_setting(GA_NAME, self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
         register_setting(GA_NAME, self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
         add_filter('pre_update_option_' . Ga_Admin::GA_EXCLUDE_ROLES_OPTION_NAME, 'Ga_Admin::preupdate_exclude_roles', 1, 2);
         add_filter('pre_update_option_' . Ga_Admin::GA_SELECTED_ACCOUNT, 'Ga_Admin::preupdate_selected_account', 1, 2);
+        add_filter('pre_update_option_' . Ga_Admin::GA_SELECTED_VIEWS, 'Ga_Admin::preupdate_selected_views', 1, 2);
     }
 
     /**
@@ -228,6 +265,8 @@ class Ga_Admin
         $data[self::GA_WEB_PROPERTY_ID_OPTION_NAME] = get_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME);
         $data[self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME] = get_option(self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
         $data[self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME] = get_option(self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
+        $data[self::GA_ACCOUNT_AND_DATA_ARRAY] = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, array()));
+        $data[self::GA_SELECTED_VIEWS] = json_decode(get_option(self::GA_SELECTED_VIEWS, array()));
 
         $roles = Ga_Helper::get_user_roles();
         $saved = json_decode(get_option(self::GA_EXCLUDE_ROLES_OPTION_NAME), true);
@@ -480,8 +519,60 @@ class Ga_Admin
                 self::save_ga_account_summaries($account_summaries->getData());
             }
 
+            $data = $response->getData();
+            if (!empty($data)){
+                $account_summaries = self::api_client()->call('ga_api_account_summaries');
+                if (!empty($account_summaries))
+                self::save_accounts($data, $account_summaries->getData());
+            }
+
             wp_redirect(admin_url(Ga_Helper::GA_SETTINGS_PAGE_URL . $param));
         }
+    }
+
+    public static function save_accounts($data, $account_summaries){
+        $array = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, array()));
+        print_r($data);
+        $return = array();
+        update_option("ga_test", wp_json_encode($data));
+        update_option("ga_test2", wp_json_encode($account_summaries));
+        $return['access_token'] = $data["access_token"];
+        $return['created'] = time();
+        $return['refresh_token'] = $data["refresh_token"];
+        $return['account_summaries'] = array();
+
+        if (!empty($account_summaries['items'])) {
+            foreach ($account_summaries['items'] as $item) {
+                $tmp = array();
+                $tmp['id'] = $item['id'];
+                $tmp['name'] = $item['name'];
+                if (is_array($item['webProperties'])) {
+                    foreach ($item['webProperties'] as $property) {
+                        $profiles = array();
+                        if (is_array($property['profiles'])) {
+                            foreach ($property['profiles'] as $profile) {
+                                $profiles[] = array(
+                                    'id' => $profile['id'],
+                                    'name' => $profile['name']
+                                );
+                            }
+                        }
+
+                        $tmp['webProperties'][] = array(
+                            'webPropertyId' => $property['id'],
+                            'name' => $property['name'],
+                            'profiles' => $profiles
+                        );
+                    }
+                }
+                $return['account_summaries'][] = $tmp;
+            }
+
+            $array[$account_summaries['username']] = $return;
+            update_option(self::GA_ACCOUNT_AND_DATA_ARRAY, wp_json_encode($array));
+            update_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME, "");
+        }
+
     }
 
     /**

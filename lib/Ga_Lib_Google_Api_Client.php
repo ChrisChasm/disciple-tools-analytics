@@ -12,7 +12,12 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
     const GA_DATA_ENDPOINT                          = 'https://analyticsreporting.googleapis.com/v4/reports:batchGet';
 	const OAUTH2_CALLBACK_URI                       = 'urn:ietf:wg:oauth:2.0:oob';
 
-	const USE_CACHE = true;
+	const USE_CACHE = true;/**
+ * Created by IntelliJ IDEA.
+ * User: jd
+ * Date: 4/17/17
+ * Time: 3:56 PM
+ */
 
 	private $disable_cache = false;
 
