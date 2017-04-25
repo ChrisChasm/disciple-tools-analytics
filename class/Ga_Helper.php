@@ -289,8 +289,8 @@ class Ga_Helper {
 	 *
 	 * @return boolean
 	 */
-	public static function is_authorized() {
-		return Ga_Admin::api_client()->get_instance()->is_authorized();
+	public static function is_authorized($token) {
+		return Ga_Admin::api_client()->get_instance()->is_authorized($token);
 	}
 
 	/**

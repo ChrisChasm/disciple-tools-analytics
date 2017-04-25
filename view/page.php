@@ -44,12 +44,8 @@
                         </th>
                         <td <?php echo ( ! Ga_Helper::are_features_enabled() ) ? 'class="ga-tooltip"' : ''; ?>>
                             <button id="ga_authorize_with_google_button" class="button-primary"
-	                            <?php if ( Ga_Helper::are_features_enabled() ) : ?>
-                                    onclick="ga_popup.authorize( event, '<?php echo esc_attr( $data['popup_url'] ); ?>' )"
-	                            <?php endif; ?>
-	                            <?php echo( ( esc_attr( $data[ Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME ] ) || ! Ga_Helper::are_features_enabled() ) ? 'disabled="disabled"' : '' ); ?>
-                            ><?php _e( 'Authenticate
-						with Google' ) ?>
+                                    onclick="ga_popup.authorize( event, '<?php echo esc_attr( $data['popup_url'] ); ?>' )">
+	                            Authenticate with Google
                             </button>
                             <span class="ga-tooltiptext"><?php _e( $tooltip ); ?></span>
 			                <?php if ( ! empty( $data[ Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME ] ) ): ?>
@@ -75,7 +71,7 @@
                         <?php foreach ($account->account_summaries as $account_summary):
                             foreach ($account_summary->webProperties as $property): ?>
                             <tr>
-                                <th> <?php echo esc_attr($account_summary->name) ?> </th>
+                                <th> <?php echo esc_attr($account_summary->name); if(isset($account_summary->reauth)){echo ". Please ReAuthenticate";} ?> </th>
                                 <td>
                                     <?php foreach ($property->profiles as $profile) : ?>
                                         <div class="checkbox">

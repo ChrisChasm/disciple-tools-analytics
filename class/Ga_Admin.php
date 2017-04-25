@@ -32,18 +32,7 @@ class Ga_Admin
      */
     public static function api_client($type = '')
     {
-
         $instance = Ga_Lib_Google_Api_Client::get_instance();
-        $token = Ga_Helper::get_option(self::GA_OAUTH_AUTH_TOKEN_OPTION_NAME);
-        try {
-            if (!empty($token)) {
-                $token = json_decode($token, true);
-                $instance->set_access_token($token);
-            }
-        } catch (Exception $e) {
-            Ga_Helper::ga_oauth_notice($e->getMessage());
-        }
-
         return $instance;
     }
 
@@ -261,34 +250,22 @@ class Ga_Admin
          * @var array $data
          */
         $data = array();
-
         $data[self::GA_WEB_PROPERTY_ID_OPTION_NAME] = get_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME);
-        $data[self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME] = get_option(self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
-        $data[self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME] = get_option(self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
         $data[self::GA_ACCOUNT_AND_DATA_ARRAY] = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, array()));
-        $data[self::GA_SELECTED_VIEWS] = json_decode(get_option(self::GA_SELECTED_VIEWS, array()));
 
-        $roles = Ga_Helper::get_user_roles();
-        $saved = json_decode(get_option(self::GA_EXCLUDE_ROLES_OPTION_NAME), true);
-
-        $tmp = array();
-        if (!empty($roles)) {
-            foreach ($roles as $role) {
-                $role_id = Ga_Helper::prepare_role_id($role);
-                $tmp[] = array(
-                    'name' => $role,
-                    'id' => $role_id,
-                    'checked' => (!empty($saved[$role_id]) && $saved[$role_id] === 'on')
-                );
-            }
+        foreach ($data[self::GA_ACCOUNT_AND_DATA_ARRAY] as $account_email => $account){
+            if(!Ga_Helper::is_authorized($account->token)){
+                foreach($account->account_summaries as $account_summary){
+                    $account_summary->reauth = true;
+//                    foreach ($account_summary->webProperties as $property){
+//                        foreach ($property->profiles as $profile){
+//                        }
+//                    }
+                }
+            };
         }
-        $data['roles'] = $tmp;
+        $data['popup_url'] = self::get_auth_popup_url();
 
-        if (Ga_Helper::is_authorized()) {
-            $data['ga_accounts_selector'] = self::get_accounts_selector();
-        } else {
-            $data['popup_url'] = self::get_auth_popup_url();
-        }
         if (!empty($_GET['err'])) {
             switch ($_GET['err']) {
                 case 1:
@@ -500,7 +477,7 @@ class Ga_Admin
 
         $code = Ga_Helper::get_option(self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
 
-        if (!Ga_Helper::is_authorized() && !empty($code)) {
+        if (!empty($code)) {
             Ga_Helper::update_option(self::GA_OAUTH_AUTH_CODE_OPTION_NAME, "");
 
             // Get access token
@@ -509,36 +486,28 @@ class Ga_Admin
                 return false;
             }
             $param = '';
-            if (!self::save_access_token($response)) {
+
+            $token = self::save_access_token($response);
+            if (empty($token)) {
                 $param = '&err=1';
             } else {
-                self::api_client()->set_access_token($response->getData());
-
-                // Get accounts data
-                $account_summaries = self::api_client()->call('ga_api_account_summaries');
-                self::save_ga_account_summaries($account_summaries->getData());
-            }
-
-            $data = $response->getData();
-            if (!empty($data)){
-                $account_summaries = self::api_client()->call('ga_api_account_summaries');
-                if (!empty($account_summaries))
-                self::save_accounts($data, $account_summaries->getData());
+                $account_summaries = self::api_client()->call('ga_api_account_summaries', array($token));
+                self::save_accounts($token, $account_summaries->getData());
             }
 
             wp_redirect(admin_url(Ga_Helper::GA_SETTINGS_PAGE_URL . $param));
         }
     }
 
-    public static function save_accounts($data, $account_summaries){
+    /**
+     * Save analytics accounts data
+     * @param $token
+     * @param $account_summaries
+     */
+    public static function save_accounts($token, $account_summaries){
         $array = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, array()));
-        print_r($data);
         $return = array();
-        update_option("ga_test", wp_json_encode($data));
-        update_option("ga_test2", wp_json_encode($account_summaries));
-        $return['access_token'] = $data["access_token"];
-        $return['created'] = time();
-        $return['refresh_token'] = $data["refresh_token"];
+        $return['token'] = $token;
         $return['account_summaries'] = array();
 
         if (!empty($account_summaries['items'])) {
@@ -575,13 +544,7 @@ class Ga_Admin
 
     }
 
-    /**
-     * Save access token.
-     *
-     * @param Ga_Lib_Api_Response $response
-     *
-     * @return boolean
-     */
+
     public static function save_access_token($response, $refresh_token = '')
     {
         $access_token = $response->getData();
@@ -594,53 +557,8 @@ class Ga_Admin
         if (!empty($refresh_token)) {
             $access_token['refresh_token'] = $refresh_token;
         }
+        return $access_token;
 
-        return update_option(self::GA_OAUTH_AUTH_TOKEN_OPTION_NAME, wp_json_encode($access_token));
-    }
-
-    /**
-     * Saves Google Analytics account data.
-     *
-     * @param $data
-     *
-     * @return array
-     */
-    public static function save_ga_account_summaries($data)
-    {
-        $return = array();
-        if (!empty($data['items'])) {
-            foreach ($data['items'] as $item) {
-                $tmp = array();
-                $tmp['id'] = $item['id'];
-                $tmp['name'] = $item['name'];
-                if (is_array($item['webProperties'])) {
-                    foreach ($item['webProperties'] as $property) {
-                        $profiles = array();
-                        if (is_array($property['profiles'])) {
-                            foreach ($property['profiles'] as $profile) {
-                                $profiles[] = array(
-                                    'id' => $profile['id'],
-                                    'name' => $profile['name']
-                                );
-                            }
-                        }
-
-                        $tmp['webProperties'][] = array(
-                            'webPropertyId' => $property['id'],
-                            'name' => $property['name'],
-                            'profiles' => $profiles
-                        );
-                    }
-                }
-
-                $return[] = $tmp;
-            }
-
-            update_option(self::GA_ACCOUNT_DATA_OPTION_NAME, wp_json_encode($return));
-            update_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME, "");
-        }
-
-        return $return;
     }
 
     /**
