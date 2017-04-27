@@ -68,20 +68,20 @@
                             <th><?php echo esc_attr($account_email) ?></th>
                             <td><strong>Include in stats and reports</strong></td>
                         </tr>
-                        <?php foreach ($account->account_summaries as $account_summary):
-                            foreach ($account_summary->webProperties as $property): ?>
+                        <?php foreach ($account['account_summaries'] as $account_summary):
+                            foreach ($account_summary['webProperties'] as $property): ?>
                             <tr>
-                                <th> <?php echo esc_attr($account_summary->name); if(isset($account_summary->reauth)){echo ". Please ReAuthenticate";} ?> </th>
+                                <th> <?php echo esc_attr($account_summary['name']); if(isset($account_summary['reauth'])){echo ". <span style='color:red'>Please ReAuthenticate</span>";} ?> </th>
                                 <td>
-                                    <?php foreach ($property->profiles as $profile) : ?>
+                                    <?php foreach ($property['profiles'] as $profile) : ?>
                                         <div class="checkbox">
                                             <label class="ga_checkbox_label"
-                                                   for="checkbox_<?php echo $profile->id; ?>">
-                                                <input id="checkbox_<?php echo $profile->id; ?>" type="checkbox"
-                                                       name="<?php echo esc_attr( Ga_Admin::GA_SELECTED_VIEWS . "[" . $profile->id . "]" ); ?>"
-                                                       id="<?php echo esc_attr( $profile->id ); ?>"
-                                                    <?php if (!empty($profile->include_in_stats)){ echo esc_attr( ( $profile->include_in_stats ? 'checked="checked"' : '' ) ); }?> />&nbsp;
-                                                <?php echo esc_html( $profile->name . ' (' . $profile->id . ')'); ?>
+                                                   for="checkbox_<?php echo $profile['id']; ?>">
+                                                <input id="checkbox_<?php echo $profile['id']; ?>" type="checkbox"
+                                                       name="<?php echo esc_attr( Ga_Admin::GA_SELECTED_VIEWS . "[" . $profile['id'] . "]" ); ?>"
+                                                       id="<?php echo esc_attr( $profile['id'] ); ?>"
+                                                    <?php if (!empty($profile['include_in_stats'])){ echo esc_attr( ( $profile['include_in_stats'] ? 'checked="checked"' : '' ) ); }?> />&nbsp;
+                                                <?php echo esc_html( $profile['name'] . ' (' . $profile['id'] . ')'); ?>
                                                 <span class="ga-tooltiptext"><?php _e( $tooltip ); ?></span>
 
                                             </label>

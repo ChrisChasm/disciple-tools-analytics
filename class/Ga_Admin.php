@@ -239,6 +239,7 @@ class Ga_Admin
      */
     public static function options_page_googleanalytics()
     {
+        self::get_report_data();
 
         if (!Ga_Helper::is_wp_version_valid() || !Ga_Helper::is_php_version_valid()) {
             return false;
@@ -251,12 +252,12 @@ class Ga_Admin
          */
         $data = array();
         $data[self::GA_WEB_PROPERTY_ID_OPTION_NAME] = get_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME);
-        $data[self::GA_ACCOUNT_AND_DATA_ARRAY] = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, array()));
+        $data[self::GA_ACCOUNT_AND_DATA_ARRAY] = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, "[]"), true);
 
         foreach ($data[self::GA_ACCOUNT_AND_DATA_ARRAY] as $account_email => $account){
-            if(!Ga_Helper::is_authorized($account->token)){
+            if(!Ga_Helper::is_authorized($account['token'])){
                 foreach($account->account_summaries as $account_summary){
-                    $account_summary->reauth = true;
+                    $account_summary['reauth'] = true;
 //                    foreach ($account_summary->webProperties as $property){
 //                        foreach ($property->profiles as $profile){
 //                        }
@@ -492,10 +493,13 @@ class Ga_Admin
                 $param = '&err=1';
             } else {
                 $account_summaries = self::api_client()->call('ga_api_account_summaries', array($token));
+                update_option("ga_test", json_encode($token));
+                update_option("ga_test2", json_encode($account_summaries->getData()));
+
                 self::save_accounts($token, $account_summaries->getData());
             }
 
-            wp_redirect(admin_url(Ga_Helper::GA_SETTINGS_PAGE_URL . $param));
+//            wp_redirect(admin_url(Ga_Helper::GA_SETTINGS_PAGE_URL . $param));
         }
     }
 
@@ -538,7 +542,7 @@ class Ga_Admin
             }
 
             $array[$account_summaries['username']] = $return;
-            update_option(self::GA_ACCOUNT_AND_DATA_ARRAY, wp_json_encode($array));
+            update_option(self::GA_ACCOUNT_AND_DATA_ARRAY, json_encode($array));
             update_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME, "");
         }
 
@@ -618,4 +622,46 @@ class Ga_Admin
         return array($chart, $boxes, $labels, $sources);
     }
 
+
+    public static function get_report_data(){
+        $data = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, "[]"), true);
+        echo 'heps';
+        print_r($data);
+        print_r(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, "[]"));
+        print_r(json_decode(wp_json_encode(array(array('token'=> "ti"))), true));
+        $selected_views = array();
+        foreach ($data as $account_email => $account){
+            foreach($account['account_summaries'] as $account_summary){
+                $account_summary['reauth'] = true;
+                foreach ($account_summary['webProperties'] as $property){
+                    foreach ($property['profiles'] as $profile){
+                        if (isset($profile['include_in_stats']) && $profile['include_in_stats']==true){
+                            $selected_views[] = array(
+                                'account_id'		 => $account_summary['id'],
+                                'web_property_id'	 => $property['webPropertyId'],
+                                'view_id'			 => $profile['id'],
+                                'token'              => $account['token']
+                            );
+                        }
+                    }
+                }
+            };
+        }
+
+        foreach($selected_views as $selected){
+            $query_params = Ga_Stats::get_query('main_chart', $selected['view_id']);
+            echo '<p>Query: ';
+            print_r($query_params);
+            print_r(json_encode($query_params));
+            echo '</p>';
+
+            $query_params['token'] = $selected['token'];
+            $stats_data = self::api_client()->call('ga_api_data', array(
+                $query_params
+            ));
+            echo '<p>stats: ';
+            print_r($stats_data);
+            echo '</p>';
+        }
+    }
 }

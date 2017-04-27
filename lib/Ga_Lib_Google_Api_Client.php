@@ -210,9 +210,12 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 	 *
 	 * @return Ga_Lib_Api_Response Returns response object
 	 */
-	private function ga_api_data( $query_params, $token ) {
+	private function ga_api_data( $query_params) {
+		$token = $query_params['token'];
+		unset($query_params['token']);
 		$request           = Ga_Lib_Api_Request::get_instance( $this->is_cache_enabled(), Ga_Helper::get_account_id() );
 		$request           = $this->sign( $request, $token );
+
 		$current_user      = wp_get_current_user();
 		$quota_user_string = '';
 		if ( ! empty( $current_user ) ) {
@@ -226,7 +229,6 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 		} catch ( Ga_Lib_Api_Request_Exception $e ) {
 			throw new Ga_Lib_Google_Api_Client_Data_Exception( $e->getMessage() );
 		}
-
 		return new Ga_Lib_Api_Response( $response );
 	}
 
@@ -267,7 +269,7 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 
 		// Set new access token
 		$token = Ga_Helper::get_option( Ga_Admin::GA_OAUTH_AUTH_TOKEN_OPTION_NAME );
-		$this->set_access_token( json_decode( $token, true ) );
+//		$this->set_access_token( json_decode( $token, true ) );
 	}
 
 	/**
@@ -300,18 +302,19 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 		if ( ! empty( $token->error ) ) {
 			return true;
 		}
+
 		// Check if the token is expired in the next 30 seconds.
-		$expired = ( $token->created + ( $token->expires_in - 30 ) ) < time();
+		$expired = ( $token['created'] + ( $token['expires_in'] - 30 ) ) < time();
 
 		return $expired;
 	}
 
 	private function check_access_token($token) {
 		if ( $this->is_access_token_expired($token) ) {
-			if ( empty( $token->refresh_token ) ) {
+			if ( empty( $token['refresh_token'] ) ) {
 				throw new Ga_Lib_Api_Client_Exception( _( 'Refresh token is not available. Please re-authenticate.' ) );
 			} else {
-				$this->refresh_access_token( $token->refresh_token );
+				$this->refresh_access_token( $token['refresh_token'] );
 			}
 		}
 	}

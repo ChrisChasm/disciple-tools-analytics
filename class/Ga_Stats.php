@@ -155,6 +155,10 @@ class Ga_Stats {
 		return $query;
 	}
 
+	public static function report_query($id_view, $date_range = null, $metric = null){
+
+	}
+
 	/**
 	 * Setting order for requests
 	 *
