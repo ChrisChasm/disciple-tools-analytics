@@ -164,7 +164,7 @@ class Ga_Stats {
 		$date_ranges = self::set_date_ranges( $last_saved_date, 'yesterday' );
 
 		if ( empty( $metric ) ) {
-			$metric = 'ga:pageviews';
+			$metric = 'ga:users';
 		} else {
 			$metric = 'ga:' . $metric;
 		}
