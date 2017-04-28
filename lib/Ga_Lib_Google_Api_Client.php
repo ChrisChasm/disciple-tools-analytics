@@ -248,8 +248,10 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 
 		// Check if the token is set to expire in the next 30 seconds
 		// (or has already expired).
-		$this->check_access_token($token);
-
+		$new_token = $this->check_access_token($token);
+		if ($new_token){
+			$token = $new_token;
+		}
 		// Add the OAuth2 header to the request
 		$request->set_request_headers( array( 'Authorization: Bearer ' . $token['access_token'] ) );
 
@@ -261,16 +263,14 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 	 *
 	 * @param $refresh_token
 	 */
-	public function refresh_access_token( $refresh_token ) {
+	public function refresh_access_token( $token ) {
 		// Request for a new Access Token
-		$response = $this->call_api_method( 'ga_auth_refresh_access_token', array( $refresh_token ) );
+		$response = $this->call_api_method( 'ga_auth_refresh_access_token', array( $token['refresh_token'] ) );
 
-		Ga_Admin::save_access_token( $response, $refresh_token );
-
-		// Set new access token
-		$token = Ga_Helper::get_option( Ga_Admin::GA_OAUTH_AUTH_TOKEN_OPTION_NAME );
-//		$this->set_access_token( json_decode( $token, true ) );
+		return Ga_Admin::save_access_token( $response, $token );
 	}
+
+
 
 	/**
 	 * Checks if Access Token is valid.
@@ -314,7 +314,7 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 			if ( empty( $token['refresh_token'] ) ) {
 				throw new Ga_Lib_Api_Client_Exception( _( 'Refresh token is not available. Please re-authenticate.' ) );
 			} else {
-				$this->refresh_access_token( $token['refresh_token'] );
+				return $this->refresh_access_token( $token );
 			}
 		}
 	}

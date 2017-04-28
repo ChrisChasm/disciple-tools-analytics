@@ -230,7 +230,8 @@ class Ga_Admin
      */
     public static function options_page_googleanalytics()
     {
-        self::get_report_data('');
+        $date_of_last_record = date('Y-m-d', strtotime('-1 day'));
+        self::get_report_data($date_of_last_record);
 
         if (!Ga_Helper::is_wp_version_valid() || !Ga_Helper::is_php_version_valid()) {
             return false;
@@ -478,7 +479,7 @@ class Ga_Admin
             }
             $param = '';
 
-            $token = self::save_access_token($response);
+            $token = self::parse_access_token($response);
             if (empty($token)) {
                 $param = '&err=1';
             } else {
@@ -538,7 +539,7 @@ class Ga_Admin
     }
 
 
-    public static function save_access_token($response, $refresh_token = '')
+    public static function parse_access_token($response, $refresh_token = '')
     {
         $access_token = $response->getData();
         if (!empty($access_token)) {
@@ -553,6 +554,24 @@ class Ga_Admin
         return $access_token;
 
     }
+
+    public static function save_access_token($response, $token){
+        if (isset($token['account_id'])){
+            $new_token = self::parse_access_token($response);
+            $array = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, array()), true);
+            foreach($array as $email => $account){
+                foreach($account['account_summaries'] as $account_summary){
+                    if ($account_summary['id'] === $token["account_id"]){
+                        $account['token'] = $new_token;
+                    }
+                }
+            }
+            update_option(self::GA_ACCOUNT_AND_DATA_ARRAY, json_encode($array));
+            return $new_token;
+        }
+    }
+
+
 
     /**
      * Handle AJAX data for the GA dashboard widget.
@@ -617,7 +636,7 @@ class Ga_Admin
         $data = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, "[]"), true);
         $selected_views = array();
 
-        $website_users = array();
+        $website_unique_visits = array();
         foreach ($data as $account_email => $account){
             foreach($account['account_summaries'] as $account_summary){
                 $account_summary['reauth'] = true;
@@ -651,9 +670,9 @@ class Ga_Admin
                 $query_params
             ));
             $report = !empty($stats_data) ? Ga_Stats::get_report($stats_data->getData()) : array();
-            $website_users[$selected['url']] = $report;
+            $website_unique_visits[$selected['url']] = $report;
         }
 
-        return $website_users;
+        return $website_unique_visits;
     }
 }
