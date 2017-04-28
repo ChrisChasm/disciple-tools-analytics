@@ -4,11 +4,9 @@ class Ga_Admin
 {
 
     //stores the selected account id
-    const GA_WEB_PROPERTY_ID_OPTION_NAME = 'googleanalytics_web_property_id';
     const GA_EXCLUDE_ROLES_OPTION_NAME = 'googleanalytics_exclude_roles';
     const GA_HIDE_TERMS_OPTION_NAME = 'googleanalytics_hide_terms';
     const GA_VERSION_OPTION_NAME = 'googleanalytics_version';
-    const GA_SELECTED_ACCOUNT = 'googleanalytics_selected_account';
     const GA_OAUTH_AUTH_CODE_OPTION_NAME = 'googleanalytics_oauth_auth_code';
     //stores the access token and the refresh token
     const GA_OAUTH_AUTH_TOKEN_OPTION_NAME = 'googleanalytics_oauth_auth_token';
@@ -42,7 +40,6 @@ class Ga_Admin
 
     public static function activate_googleanalytics()
     {
-        add_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME, Ga_Helper::GA_DEFAULT_WEB_ID);
         add_option(self::GA_EXCLUDE_ROLES_OPTION_NAME, wp_json_encode(array()));
         add_option(self::GA_ACCOUNT_AND_DATA_ARRAY, wp_json_encode(array()));
         add_option(self::GA_SELECTED_VIEWS, wp_json_encode(array()));
@@ -51,7 +48,6 @@ class Ga_Admin
         add_option(self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
         add_option(self::GA_OAUTH_AUTH_TOKEN_OPTION_NAME);
         add_option(self::GA_ACCOUNT_DATA_OPTION_NAME);
-        add_option(self::GA_SELECTED_ACCOUNT);
         add_option(self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
         add_option(self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
         Ga_Cache::add_cache_options();
@@ -63,14 +59,12 @@ class Ga_Admin
 
     public static function deactivate_googleanalytics()
     {
-        delete_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME);
         delete_option(self::GA_EXCLUDE_ROLES_OPTION_NAME);
         delete_option(self::GA_ACCOUNT_AND_DATA_ARRAY);
         delete_option(self::GA_SELECTED_VIEWS);
         delete_option(self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
         delete_option(self::GA_OAUTH_AUTH_TOKEN_OPTION_NAME);
         delete_option(self::GA_ACCOUNT_DATA_OPTION_NAME);
-        delete_option(self::GA_SELECTED_ACCOUNT);
         delete_option(self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
         delete_option(self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
         Ga_Cache::delete_cache_options();
@@ -188,15 +182,12 @@ class Ga_Admin
      */
     public static function admin_init_googleanalytics()
     {
-        register_setting(GA_NAME, self::GA_WEB_PROPERTY_ID_OPTION_NAME);
         register_setting(GA_NAME, self::GA_EXCLUDE_ROLES_OPTION_NAME);
-        register_setting(GA_NAME, self::GA_SELECTED_ACCOUNT);
         register_setting(GA_NAME, self::GA_SELECTED_VIEWS);
         register_setting(GA_NAME, self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
         register_setting(GA_NAME, self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
         register_setting(GA_NAME, self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
         add_filter('pre_update_option_' . Ga_Admin::GA_EXCLUDE_ROLES_OPTION_NAME, 'Ga_Admin::preupdate_exclude_roles', 1, 2);
-        add_filter('pre_update_option_' . Ga_Admin::GA_SELECTED_ACCOUNT, 'Ga_Admin::preupdate_selected_account', 1, 2);
         add_filter('pre_update_option_' . Ga_Admin::GA_SELECTED_VIEWS, 'Ga_Admin::preupdate_selected_views', 1, 2);
     }
 
@@ -239,7 +230,7 @@ class Ga_Admin
      */
     public static function options_page_googleanalytics()
     {
-        self::get_report_data();
+        self::get_report_data('');
 
         if (!Ga_Helper::is_wp_version_valid() || !Ga_Helper::is_php_version_valid()) {
             return false;
@@ -251,12 +242,11 @@ class Ga_Admin
          * @var array $data
          */
         $data = array();
-        $data[self::GA_WEB_PROPERTY_ID_OPTION_NAME] = get_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME);
         $data[self::GA_ACCOUNT_AND_DATA_ARRAY] = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, "[]"), true);
 
         foreach ($data[self::GA_ACCOUNT_AND_DATA_ARRAY] as $account_email => $account){
             if(!Ga_Helper::is_authorized($account['token'])){
-                foreach($account->account_summaries as $account_summary){
+                foreach($account['account_summaries'] as $account_summary){
                     $account_summary['reauth'] = true;
 //                    foreach ($account_summary->webProperties as $property){
 //                        foreach ($property->profiles as $profile){
@@ -374,28 +364,28 @@ class Ga_Admin
         }
     }
 
-    /**
-     * Prepares plugin's statistics page and return HTML code.
-     *
-     * @return string HTML code
-     */
-    public static function get_stats_page()
-    {
-        $chart = null;
-        $boxes = null;
-        $labels = null;
-        $sources = null;
-        if (Ga_Helper::is_authorized() && Ga_Helper::is_account_selected() && !Ga_Helper::is_all_feature_disabled()) {
-            list($chart, $boxes, $labels, $sources) = self::generate_stats_data();
-        }
-
-        return Ga_Helper::get_chart_page('stats', array(
-            'chart' => $chart,
-            'boxes' => $boxes,
-            'labels' => $labels,
-            'sources' => $sources
-        ));
-    }
+//    /**
+//     * Prepares plugin's statistics page and return HTML code.
+//     *
+//     * @return string HTML code
+//     */
+//    public static function get_stats_page()
+//    {
+//        $chart = null;
+//        $boxes = null;
+//        $labels = null;
+//        $sources = null;
+//        if (Ga_Helper::is_authorized() && Ga_Helper::is_account_selected() && !Ga_Helper::is_all_feature_disabled()) {
+//            list($chart, $boxes, $labels, $sources) = self::generate_stats_data();
+//        }
+//
+//        return Ga_Helper::get_chart_page('stats', array(
+//            'chart' => $chart,
+//            'boxes' => $boxes,
+//            'labels' => $labels,
+//            'sources' => $sources
+//        ));
+//    }
 
     /**
      * Shows plugin's notice on the admin area.
@@ -509,7 +499,7 @@ class Ga_Admin
      * @param $account_summaries
      */
     public static function save_accounts($token, $account_summaries){
-        $array = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, array()));
+        $array = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, array()), true);
         $return = array();
         $return['token'] = $token;
         $return['account_summaries'] = array();
@@ -543,7 +533,6 @@ class Ga_Admin
 
             $array[$account_summaries['username']] = $return;
             update_option(self::GA_ACCOUNT_AND_DATA_ARRAY, json_encode($array));
-            update_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME, "");
         }
 
     }
@@ -623,13 +612,12 @@ class Ga_Admin
     }
 
 
-    public static function get_report_data(){
+    public static function get_report_data($last_report){
+
         $data = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, "[]"), true);
-        echo 'heps';
-        print_r($data);
-        print_r(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, "[]"));
-        print_r(json_decode(wp_json_encode(array(array('token'=> "ti"))), true));
         $selected_views = array();
+
+        $website_users = array();
         foreach ($data as $account_email => $account){
             foreach($account['account_summaries'] as $account_summary){
                 $account_summary['reauth'] = true;
@@ -637,10 +625,11 @@ class Ga_Admin
                     foreach ($property['profiles'] as $profile){
                         if (isset($profile['include_in_stats']) && $profile['include_in_stats']==true){
                             $selected_views[] = array(
-                                'account_id'		 => $account_summary['id'],
-                                'web_property_id'	 => $property['webPropertyId'],
-                                'view_id'			 => $profile['id'],
-                                'token'              => $account['token']
+                                'account_id'		=> $account_summary['id'],
+                                'web_property_id'	=> $property['webPropertyId'],
+                                'view_id'			=> $profile['id'],
+                                'token'             => $account['token'],
+                                'url'               => $property['name']
                             );
                         }
                     }
@@ -648,20 +637,23 @@ class Ga_Admin
             };
         }
 
-        foreach($selected_views as $selected){
-            $query_params = Ga_Stats::get_query('main_chart', $selected['view_id']);
-            echo '<p>Query: ';
-            print_r($query_params);
-            print_r(json_encode($query_params));
-            echo '</p>';
+        $last_report = new DateTime($last_report);
+        $today = new DateTime();
+        $interval = $last_report->diff($today);
 
+        $datys_ago = $interval->format('%adaysago');
+
+        foreach($selected_views as $selected){
+            $query_params = Ga_Stats::get_query('report', $selected['view_id'], $datys_ago);
             $query_params['token'] = $selected['token'];
+            $query_params['token']['account_id'] = $selected['account_id'];
             $stats_data = self::api_client()->call('ga_api_data', array(
                 $query_params
             ));
-            echo '<p>stats: ';
-            print_r($stats_data);
-            echo '</p>';
+            $report = !empty($stats_data) ? Ga_Stats::get_report($stats_data->getData()) : array();
+            $website_users[$selected['url']] = $report;
         }
+
+        return $website_users;
     }
 }

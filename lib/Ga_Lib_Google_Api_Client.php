@@ -212,9 +212,9 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 	 */
 	private function ga_api_data( $query_params) {
 		$token = $query_params['token'];
-		unset($query_params['token']);
-		$request           = Ga_Lib_Api_Request::get_instance( $this->is_cache_enabled(), Ga_Helper::get_account_id() );
+		$request           = Ga_Lib_Api_Request::get_instance( $this->is_cache_enabled(), $token['account_id'] );
 		$request           = $this->sign( $request, $token );
+		unset($query_params['token']);
 
 		$current_user      = wp_get_current_user();
 		$quota_user_string = '';

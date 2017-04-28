@@ -508,13 +508,5 @@ class Ga_Helper {
 		return ( self::is_configured( $web_property_id ) && ( self::can_add_ga_code() || self::is_all_feature_disabled() ) );
 	}
 
-	/**
-	 * @return string
-	 */
-	public static function get_account_id() {
-		$account_id = json_decode( Ga_Helper::get_option( Ga_Admin::GA_SELECTED_ACCOUNT ) );
-
-		return ! empty( $account_id[0] ) ? $account_id[0] : '';
-	}
 
 }
