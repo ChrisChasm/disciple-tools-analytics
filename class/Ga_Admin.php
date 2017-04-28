@@ -197,41 +197,38 @@ class Ga_Admin
     public static function admin_menu_googleanalytics()
     {
         if (current_user_can('manage_options')) {
-            add_menu_page('DTools Analytics', 'DTools Analytics', 'manage_options', 'googleanalytics', 'Ga_Admin::statistics_page_googleanalytics', 'dashicons-chart-line', 1000);
-            add_submenu_page('googleanalytics', 'DTools Analytics', __('Dashboard'), 'manage_options', 'googleanalytics', 'Ga_Admin::statistics_page_googleanalytics');
-            add_submenu_page('googleanalytics', 'DTools Analytics', __('Settings'), 'manage_options', 'googleanalytics/settings', 'Ga_Admin::options_page_googleanalytics');
+            add_submenu_page('options-general.php', __( 'Analytics (DT)', 'disciple_tools' ),
+            __( 'Analytics (DT)', 'disciple_tools' ), 'manage_options', 'googleanalytics/settings', 'Ga_Admin::options_page_googleanalytics' );
         }
     }
 
     /**
      * Prepares and displays plugin's stats page.
      */
-    public static function statistics_page_googleanalytics()
-    {
-
-        if (!Ga_Helper::is_wp_version_valid() || !Ga_Helper::is_php_version_valid()) {
-            return false;
-        }
-
-        $data = self::get_stats_page();
-        Ga_View_Core::load('statistics', array(
-            'data' => $data
-        ));
-
-        if (Ga_Cache::is_data_cache_outdated('', Ga_Helper::get_account_id())) {
-            self::api_client()->add_own_error('1', _('Saved data is shown, it will be refreshed soon'), 'Ga_Data_Outdated_Exception');
-        }
-
-        self::display_api_errors();
-    }
+//    public static function statistics_page_googleanalytics()
+//    {
+//
+//        if (!Ga_Helper::is_wp_version_valid() || !Ga_Helper::is_php_version_valid()) {
+//            return false;
+//        }
+//
+//        $data = self::get_stats_page();
+//        Ga_View_Core::load('statistics', array(
+//            'data' => $data
+//        ));
+//
+//        if (Ga_Cache::is_data_cache_outdated('', Ga_Helper::get_account_id())) {
+//            self::api_client()->add_own_error('1', _('Saved data is shown, it will be refreshed soon'), 'Ga_Data_Outdated_Exception');
+//        }
+//
+//        self::display_api_errors();
+//    }
 
     /**
      * Prepares and displays plugin's settings page.
      */
     public static function options_page_googleanalytics()
     {
-        $date_of_last_record = date('Y-m-d', strtotime('-1 day'));
-        self::get_report_data($date_of_last_record);
 
         if (!Ga_Helper::is_wp_version_valid() || !Ga_Helper::is_php_version_valid()) {
             return false;
@@ -365,11 +362,11 @@ class Ga_Admin
         }
     }
 
-//    /**
-//     * Prepares plugin's statistics page and return HTML code.
-//     *
-//     * @return string HTML code
-//     */
+    /**
+     * Prepares plugin's statistics page and return HTML code.
+     *
+     * @return string HTML code
+     */
 //    public static function get_stats_page()
 //    {
 //        $chart = null;
@@ -401,12 +398,12 @@ class Ga_Admin
     /**
      * Adds GA dashboard widget only for administrators.
      */
-    public static function add_dashboard_device_widget()
-    {
-        if (Ga_Helper::is_administrator()) {
-            wp_add_dashboard_widget('ga_dashboard_widget', __('Google Analytics Dashboard'), 'Ga_Helper::add_ga_dashboard_widget');
-        }
-    }
+//    public static function add_dashboard_device_widget()
+//    {
+//        if (Ga_Helper::is_administrator()) {
+//            wp_add_dashboard_widget('ga_dashboard_widget', __('Google Analytics Dashboard'), 'Ga_Helper::add_ga_dashboard_widget');
+//        }
+//    }
 
     /**
      * Adds plugin's actions
@@ -416,7 +413,7 @@ class Ga_Admin
         add_action('admin_init', 'Ga_Admin::admin_init_googleanalytics');
         add_action('admin_menu', 'Ga_Admin::admin_menu_googleanalytics');
         add_action('admin_enqueue_scripts', 'Ga_Admin::enqueue_scripts');
-        add_action('wp_dashboard_setup', 'Ga_Admin::add_dashboard_device_widget');
+//        add_action('wp_dashboard_setup', 'Ga_Admin::add_dashboard_device_widget');
         add_action('wp_ajax_ga_ajax_data_change', 'Ga_Admin::ga_ajax_data_change');
         add_action('heartbeat_tick', 'Ga_Admin::run_heartbeat_jobs');
     }

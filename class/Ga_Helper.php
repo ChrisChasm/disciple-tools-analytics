@@ -161,9 +161,9 @@ class Ga_Helper {
 	 * Adds ga dashboard widget HTML code for a WordPress
 	 * Dashboard widget hook.
 	 */
-	public static function add_ga_dashboard_widget() {
-		echo self::get_ga_dashboard_widget();
-	}
+//	public static function add_ga_dashboard_widget() {
+//		echo self::get_ga_dashboard_widget();
+//	}
 
 	/**
 	 * Generates dashboard widget HTML code.
@@ -174,29 +174,29 @@ class Ga_Helper {
 	 *
 	 * @return null | string HTML dashboard widget code.
 	 */
-	public static function get_ga_dashboard_widget( $date_range = null, $text_mode = false, $ajax = false ) {
-		if ( empty( $date_range ) ) {
-			$date_range = '30daysAgo';
-		}
-
-		// Get chart and boxes data
-		$data = self::get_dashboard_widget_data( $date_range );
-
-		if ( $text_mode ) {
-			return self::get_chart_page( 'ga_dashboard_widget' . ( $ajax ? "_ajax" : "" ), array(
-				'chart'	 => $data[ 'chart' ],
-				'boxes'	 => $data[ 'boxes' ]
-			) );
-		} else {
-			echo self::get_chart_page( 'ga_dashboard_widget' . ( $ajax ? "_ajax" : "" ), array(
-				'chart'				 => $data[ 'chart' ],
-				'boxes'				 => $data[ 'boxes' ],
-				'more_details_url'	 => admin_url( self::GA_STATISTICS_PAGE_URL )
-			) );
-		}
-
-		return null;
-	}
+//	public static function get_ga_dashboard_widget( $date_range = null, $text_mode = false, $ajax = false ) {
+//		if ( empty( $date_range ) ) {
+//			$date_range = '30daysAgo';
+//		}
+//
+//		// Get chart and boxes data
+//		$data = self::get_dashboard_widget_data( $date_range );
+//
+//		if ( $text_mode ) {
+//			return self::get_chart_page( 'ga_dashboard_widget' . ( $ajax ? "_ajax" : "" ), array(
+//				'chart'	 => $data[ 'chart' ],
+//				'boxes'	 => $data[ 'boxes' ]
+//			) );
+//		} else {
+//			echo self::get_chart_page( 'ga_dashboard_widget' . ( $ajax ? "_ajax" : "" ), array(
+//				'chart'				 => $data[ 'chart' ],
+//				'boxes'				 => $data[ 'boxes' ],
+//				'more_details_url'	 => admin_url( self::GA_STATISTICS_PAGE_URL )
+//			) );
+//		}
+//
+//		return null;
+//	}
 
 	/**
 	 * Generates JSON data string for AJAX calls.
@@ -208,21 +208,21 @@ class Ga_Helper {
 	 *
 	 * @return string|false Returns JSON data string
 	 */
-	public static function get_ga_dashboard_widget_data_json(
-	$date_range = null, $metric = null, $text_mode = false, $ajax = false
-	) {
-		if ( empty( $date_range ) ) {
-			$date_range = '30daysAgo';
-		}
-
-		if ( empty( $metric ) ) {
-			$metric = 'pageviews';
-		}
-
-		$data = self::get_dashboard_widget_data( $date_range, $metric );
-
-		return wp_json_encode( $data );
-	}
+//	public static function get_ga_dashboard_widget_data_json(
+//	$date_range = null, $metric = null, $text_mode = false, $ajax = false
+//	) {
+//		if ( empty( $date_range ) ) {
+//			$date_range = '30daysAgo';
+//		}
+//
+//		if ( empty( $metric ) ) {
+//			$metric = 'pageviews';
+//		}
+//
+//		$data = self::get_dashboard_widget_data( $date_range, $metric );
+//
+//		return wp_json_encode( $data );
+//	}
 
 	/**
 	 * Gets dashboard widget data.
@@ -232,27 +232,27 @@ class Ga_Helper {
 	 *
 	 * @return array Return chart and boxes data
 	 */
-	private static function get_dashboard_widget_data( $date_range, $metric = null ) {
-		$selected = self::get_selected_account_data( true );
-		if ( self::is_authorized() && self::is_account_selected() ) {
-			$query_params	 = Ga_Stats::get_query( 'main_chart', $selected[ 'view_id' ], $date_range, $metric );
-			$stats_data		 = Ga_Admin::api_client()->call( 'ga_api_data', array(
-				$query_params
-			) );
-
-			$boxes_query = Ga_Stats::get_query( 'dashboard_boxes', $selected[ 'view_id' ], $date_range );
-			$boxes_data	 = Ga_Admin::api_client()->call( 'ga_api_data', array(
-				$boxes_query
-			) );
-		}
-		$chart	 = !empty( $stats_data ) ? Ga_Stats::get_dashboard_chart( $stats_data->getData() ) : array();
-		$boxes	 = !empty( $boxes_data ) ? Ga_Stats::get_dashboard_boxes_data( $boxes_data->getData() ) : array();
-
-		return array(
-			'chart'	 => $chart,
-			'boxes'	 => $boxes
-		);
-	}
+//	private static function get_dashboard_widget_data( $date_range, $metric = null ) {
+//		$selected = self::get_selected_account_data( true );
+//		if ( self::is_authorized() && self::is_account_selected() ) {
+//			$query_params	 = Ga_Stats::get_query( 'main_chart', $selected[ 'view_id' ], $date_range, $metric );
+//			$stats_data		 = Ga_Admin::api_client()->call( 'ga_api_data', array(
+//				$query_params
+//			) );
+//
+//			$boxes_query = Ga_Stats::get_query( 'dashboard_boxes', $selected[ 'view_id' ], $date_range );
+//			$boxes_data	 = Ga_Admin::api_client()->call( 'ga_api_data', array(
+//				$boxes_query
+//			) );
+//		}
+//		$chart	 = !empty( $stats_data ) ? Ga_Stats::get_dashboard_chart( $stats_data->getData() ) : array();
+//		$boxes	 = !empty( $boxes_data ) ? Ga_Stats::get_dashboard_boxes_data( $boxes_data->getData() ) : array();
+//
+//		return array(
+//			'chart'	 => $chart,
+//			'boxes'	 => $boxes
+//		);
+//	}
 
 	public static function is_account_selected() {
 		return self::get_selected_account_data();
@@ -360,24 +360,24 @@ class Ga_Helper {
 	 *
 	 * @return mixed
 	 */
-	public static function get_selected_account_data( $assoc = false ) {
-		$data	 = json_decode( self::get_option( Ga_Admin::GA_SELECTED_ACCOUNT ) );
-		$data	 = (!empty( $data ) && count( $data ) == 3 ) ? $data : false;
-
-		if ( $data ) {
-			if ( $assoc ) {
-				return array(
-					'account_id'		 => $data[ 0 ],
-					'web_property_id'	 => $data[ 1 ],
-					'view_id'			 => $data[ 2 ]
-				);
-			} else {
-				return $data;
-			}
-		}
-
-		return false;
-	}
+//	public static function get_selected_account_data( $assoc = false ) {
+//		$data	 = json_decode( self::get_option( Ga_Admin::GA_SELECTED_ACCOUNT ) );
+//		$data	 = (!empty( $data ) && count( $data ) == 3 ) ? $data : false;
+//
+//		if ( $data ) {
+//			if ( $assoc ) {
+//				return array(
+//					'account_id'		 => $data[ 0 ],
+//					'web_property_id'	 => $data[ 1 ],
+//					'view_id'			 => $data[ 2 ]
+//				);
+//			} else {
+//				return $data;
+//			}
+//		}
+//
+//		return false;
+//	}
 
 	/**
 	 * Chekcs whether option for manually UA-code
