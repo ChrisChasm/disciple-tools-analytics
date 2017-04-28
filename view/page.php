@@ -48,11 +48,7 @@
 	                            Authenticate with Google
                             </button>
                             <span class="ga-tooltiptext"><?php _e( $tooltip ); ?></span>
-			                <?php if ( ! empty( $data[ Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME ] ) ): ?>
-                                <div class="ga_warning">
-                                    <strong><?php _e( 'Notice' ) ?></strong>:&nbsp;<?php _e( 'Please uncheck the "Manually enter Tracking ID" option to authenticate and view statistics.' ); ?>
-                                </div>
-			                <?php endif; ?>
+
                         </td>
 	                <?php endif; ?>
                 </tr>

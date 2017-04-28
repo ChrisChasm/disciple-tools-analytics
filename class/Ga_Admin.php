@@ -4,16 +4,11 @@ class Ga_Admin
 {
 
     //stores the selected account id
-    const GA_EXCLUDE_ROLES_OPTION_NAME = 'googleanalytics_exclude_roles';
-    const GA_HIDE_TERMS_OPTION_NAME = 'googleanalytics_hide_terms';
     const GA_VERSION_OPTION_NAME = 'googleanalytics_version';
     const GA_OAUTH_AUTH_CODE_OPTION_NAME = 'googleanalytics_oauth_auth_code';
     //stores the access token and the refresh token
     const GA_OAUTH_AUTH_TOKEN_OPTION_NAME = 'googleanalytics_oauth_auth_token';
-    const GA_ACCOUNT_DATA_OPTION_NAME = 'googleanalytics_account_data';
-    //manually not used
-    const GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME           = 'googleanalytics_web_property_id_manually';
-    const GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME  = 'googleanalytics_web_property_id_manually_value';
+    //manually not used'
     const MIN_WP_VERSION = '3.8';
     const NOTICE_SUCCESS = 'success';
     const NOTICE_WARNING = 'warning';
@@ -40,16 +35,11 @@ class Ga_Admin
 
     public static function activate_googleanalytics()
     {
-        add_option(self::GA_EXCLUDE_ROLES_OPTION_NAME, wp_json_encode(array()));
         add_option(self::GA_ACCOUNT_AND_DATA_ARRAY, wp_json_encode(array()));
         add_option(self::GA_SELECTED_VIEWS, wp_json_encode(array()));
-        add_option(self::GA_HIDE_TERMS_OPTION_NAME, false);
         add_option(self::GA_VERSION_OPTION_NAME);
         add_option(self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
         add_option(self::GA_OAUTH_AUTH_TOKEN_OPTION_NAME);
-        add_option(self::GA_ACCOUNT_DATA_OPTION_NAME);
-        add_option(self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
-        add_option(self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
         Ga_Cache::add_cache_options();
     }
 
@@ -59,14 +49,10 @@ class Ga_Admin
 
     public static function deactivate_googleanalytics()
     {
-        delete_option(self::GA_EXCLUDE_ROLES_OPTION_NAME);
         delete_option(self::GA_ACCOUNT_AND_DATA_ARRAY);
         delete_option(self::GA_SELECTED_VIEWS);
         delete_option(self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
         delete_option(self::GA_OAUTH_AUTH_TOKEN_OPTION_NAME);
-        delete_option(self::GA_ACCOUNT_DATA_OPTION_NAME);
-        delete_option(self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
-        delete_option(self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
         Ga_Cache::delete_cache_options();
     }
 
@@ -75,7 +61,6 @@ class Ga_Admin
      */
     public static function uninstall_googleanalytics()
     {
-        delete_option(self::GA_HIDE_TERMS_OPTION_NAME);
         delete_option(self::GA_VERSION_OPTION_NAME);
     }
 
@@ -84,33 +69,24 @@ class Ga_Admin
      */
     public static function loaded_googleanalytics()
     {
-        self::update_googleanalytics();
+//        self::update_googleanalytics();
     }
 
-    /**
-     * Update hook fires when plugin is being loaded.
-     */
-    public static function update_googleanalytics()
-    {
-
-        $version = get_option(self::GA_VERSION_OPTION_NAME);
-        $installed_version = get_option(self::GA_VERSION_OPTION_NAME, '1.0.7');
-        $old_property_value = Ga_Helper::get_option('web_property_id');
-        if (version_compare($installed_version, GOOGLEANALYTICS_VERSION, 'eq')) {
-            return;
-        }
-
-        if (version_compare($installed_version, GOOGLEANALYTICS_VERSION, 'lt')) {
-
-            if (!empty($old_property_value)) {
-                Ga_Helper::update_option(self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME, $old_property_value);
-                Ga_Helper::update_option(self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME, 1);
-                delete_option('web_property_id');
-            }
-        }
-
-        update_option(self::GA_VERSION_OPTION_NAME, GOOGLEANALYTICS_VERSION);
-    }
+//    /**
+//     * Update hook fires when plugin is being loaded.
+//     */
+//    public static function update_googleanalytics()
+//    {
+//
+//        $version = get_option(self::GA_VERSION_OPTION_NAME);
+//        $installed_version = get_option(self::GA_VERSION_OPTION_NAME, '1.0.7');
+//        $old_property_value = Ga_Helper::get_option('web_property_id');
+//        if (version_compare($installed_version, GOOGLEANALYTICS_VERSION, 'eq')) {
+//            return;
+//        }
+//
+//        update_option(self::GA_VERSION_OPTION_NAME, GOOGLEANALYTICS_VERSION);
+//    }
 
     public static function preupdate_selected_views($new_value, $old_value)
     {
@@ -146,48 +122,15 @@ class Ga_Admin
         return wp_json_encode($new_value);
     }
 
-    /**
-     * Pre-update hook for preparing JSON structure.
-     *
-     * @param $new_value
-     * @param $old_value
-     *
-     * @return mixed
-     */
-    public static function preupdate_selected_account($new_value, $old_value)
-    {
-        $data = null;
-        if (!empty($new_value)) {
-            $data = explode("_", $new_value);
 
-            if (!empty($data[1])) {
-                Ga_Helper::update_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME, $data[1]);
-            }
-        }
-
-        return wp_json_encode($data);
-    }
-
-    public static function preupdate_disable_all_features($new_value, $old_value)
-    {
-        if ($old_value == 'on') {
-            Ga_Helper::update_option(Ga_Admin::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME, false);
-        }
-
-        return $new_value;
-    }
 
     /**
      * Registers plugin's settings.
      */
     public static function admin_init_googleanalytics()
     {
-        register_setting(GA_NAME, self::GA_EXCLUDE_ROLES_OPTION_NAME);
         register_setting(GA_NAME, self::GA_SELECTED_VIEWS);
         register_setting(GA_NAME, self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
-        register_setting(GA_NAME, self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
-        register_setting(GA_NAME, self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
-        add_filter('pre_update_option_' . Ga_Admin::GA_EXCLUDE_ROLES_OPTION_NAME, 'Ga_Admin::preupdate_exclude_roles', 1, 2);
         add_filter('pre_update_option_' . Ga_Admin::GA_SELECTED_VIEWS, 'Ga_Admin::preupdate_selected_views', 1, 2);
     }
 
@@ -202,27 +145,6 @@ class Ga_Admin
         }
     }
 
-    /**
-     * Prepares and displays plugin's stats page.
-     */
-//    public static function statistics_page_googleanalytics()
-//    {
-//
-//        if (!Ga_Helper::is_wp_version_valid() || !Ga_Helper::is_php_version_valid()) {
-//            return false;
-//        }
-//
-//        $data = self::get_stats_page();
-//        Ga_View_Core::load('statistics', array(
-//            'data' => $data
-//        ));
-//
-//        if (Ga_Cache::is_data_cache_outdated('', Ga_Helper::get_account_id())) {
-//            self::api_client()->add_own_error('1', _('Saved data is shown, it will be refreshed soon'), 'Ga_Data_Outdated_Exception');
-//        }
-//
-//        self::display_api_errors();
-//    }
 
     /**
      * Prepares and displays plugin's settings page.
@@ -281,21 +203,6 @@ class Ga_Admin
         return admin_url(Ga_Helper::create_url(Ga_Helper::GA_SETTINGS_PAGE_URL, array(Ga_Controller_Core::ACTION_PARAM_NAME => 'ga_action_auth')));
     }
 
-    /**
-     * Prepares and returns Google Account's dropdown code.
-     *
-     * @return string
-     */
-    public static function get_accounts_selector()
-    {
-        $selected = Ga_Helper::get_selected_account_data();
-
-        return Ga_View_Core::load('ga_accounts_selector', array(
-            'selector' => json_decode(get_option(self::GA_ACCOUNT_DATA_OPTION_NAME), true),
-            'selected' => $selected ? implode("_", $selected) : null,
-            'add_manually_enabled' => Ga_Helper::is_code_manually_enabled() || Ga_Helper::is_all_feature_disabled()
-        ), true);
-    }
 
     /**
      * Adds JS scripts for the settings page.
@@ -325,16 +232,6 @@ class Ga_Admin
         wp_enqueue_style(GA_NAME . '-modal-css');
     }
 
-    /**
-     * Enqueues dashboard JS scripts.
-     */
-    private static function enqueue_dashboard_scripts()
-    {
-        wp_register_script(GA_NAME . '-dashboard-js', GA_PLUGIN_URL . '/js/' . GA_NAME . '_dashboard.js', array(
-            'jquery'
-        ));
-        wp_enqueue_script(GA_NAME . '-dashboard-js');
-    }
 
     /**
      * Enqueues plugin's JS and CSS scripts.
@@ -353,37 +250,11 @@ class Ga_Admin
             self::enqueue_ga_css();
         }
 
-        if (Ga_Helper::is_dashboard_page()) {
-            self::enqueue_dashboard_scripts();
-        }
-
         if (Ga_Helper::is_plugin_page()) {
             self::enqueue_ga_scripts();
         }
     }
 
-    /**
-     * Prepares plugin's statistics page and return HTML code.
-     *
-     * @return string HTML code
-     */
-//    public static function get_stats_page()
-//    {
-//        $chart = null;
-//        $boxes = null;
-//        $labels = null;
-//        $sources = null;
-//        if (Ga_Helper::is_authorized() && Ga_Helper::is_account_selected() && !Ga_Helper::is_all_feature_disabled()) {
-//            list($chart, $boxes, $labels, $sources) = self::generate_stats_data();
-//        }
-//
-//        return Ga_Helper::get_chart_page('stats', array(
-//            'chart' => $chart,
-//            'boxes' => $boxes,
-//            'labels' => $labels,
-//            'sources' => $sources
-//        ));
-//    }
 
     /**
      * Shows plugin's notice on the admin area.
@@ -395,15 +266,6 @@ class Ga_Admin
         }
     }
 
-    /**
-     * Adds GA dashboard widget only for administrators.
-     */
-//    public static function add_dashboard_device_widget()
-//    {
-//        if (Ga_Helper::is_administrator()) {
-//            wp_add_dashboard_widget('ga_dashboard_widget', __('Google Analytics Dashboard'), 'Ga_Helper::add_ga_dashboard_widget');
-//        }
-//    }
 
     /**
      * Adds plugin's actions
@@ -413,7 +275,6 @@ class Ga_Admin
         add_action('admin_init', 'Ga_Admin::admin_init_googleanalytics');
         add_action('admin_menu', 'Ga_Admin::admin_menu_googleanalytics');
         add_action('admin_enqueue_scripts', 'Ga_Admin::enqueue_scripts');
-//        add_action('wp_dashboard_setup', 'Ga_Admin::add_dashboard_device_widget');
         add_action('wp_ajax_ga_ajax_data_change', 'Ga_Admin::ga_ajax_data_change');
         add_action('heartbeat_tick', 'Ga_Admin::run_heartbeat_jobs');
     }
@@ -431,7 +292,7 @@ class Ga_Admin
             self::api_client()->set_disable_cache(true);
 
             // Try to regenerate cache if needed
-            self::generate_stats_data();
+//            self::generate_stats_data();
         }
     }
 
@@ -487,7 +348,7 @@ class Ga_Admin
                 self::save_accounts($token, $account_summaries->getData());
             }
 
-//            wp_redirect(admin_url(Ga_Helper::GA_SETTINGS_PAGE_URL . $param));
+            wp_redirect(admin_url(Ga_Helper::GA_SETTINGS_PAGE_URL . $param));
         }
     }
 
@@ -571,17 +432,6 @@ class Ga_Admin
 
 
     /**
-     * Handle AJAX data for the GA dashboard widget.
-     */
-    public static function ga_ajax_data_change()
-    {
-        $date_range = !empty($_POST['date_range']) ? $_POST['date_range'] : null;
-        $metric = !empty($_POST['metric']) ? $_POST['metric'] : null;
-        echo Ga_Helper::get_ga_dashboard_widget_data_json($date_range, $metric, false, true);
-        wp_die();
-    }
-
-    /**
      * Displays API error messages.
      */
     public static function display_api_errors($alias = '')
@@ -594,38 +444,6 @@ class Ga_Admin
         }
     }
 
-    /**
-     * Gets dashboard data.
-     *
-     * @return array
-     */
-    public static function generate_stats_data()
-    {
-        $selected = Ga_Helper::get_selected_account_data(true);
-
-        $query_params = Ga_Stats::get_query('main_chart', $selected['view_id']);
-        $stats_data = self::api_client()->call('ga_api_data', array(
-            $query_params
-        ));
-
-        $boxes_data = self::api_client()->call('ga_api_data', array(
-            Ga_Stats::get_query('boxes', $selected['view_id'])
-        ));
-        $sources_data = self::api_client()->call('ga_api_data', array(
-            Ga_Stats::get_query('sources', $selected['view_id'])
-        ));
-        $chart = !empty($stats_data) ? Ga_Stats::get_chart($stats_data->getData()) : array();
-        $boxes = !empty($boxes_data) ? Ga_Stats::get_boxes($boxes_data->getData()) : array();
-        $last_chart_date = !empty($chart) ? $chart['date'] : strtotime('now');
-        unset($chart['date']);
-        $labels = array(
-            'thisWeek' => date('M d, Y', strtotime('-6 day', $last_chart_date)) . ' - ' . date('M d, Y', $last_chart_date),
-            'lastWeek' => date('M d, Y', strtotime('-13 day', $last_chart_date)) . ' - ' . date('M d, Y', strtotime('-7 day', $last_chart_date))
-        );
-        $sources = !empty($sources_data) ? Ga_Stats::get_sources($sources_data->getData()) : array();
-
-        return array($chart, $boxes, $labels, $sources);
-    }
 
 
     public static function get_report_data($last_report){
