@@ -29,6 +29,8 @@ class Ga_Stats {
 			return self::dashboard_boxes_query( $id_view, $date_range );
 		} elseif ( $query == 'sources' ) {
 			return self::sources_query( $id_view );
+		} elseif ( $query == 'report' ) {
+			return self::report_query( $id_view, $date_range );
 		} else {
 			return array();
 		}
@@ -153,6 +155,33 @@ class Ga_Stats {
 		);
 
 		return $query;
+	}
+
+	public static function report_query($id_view, $last_saved_date = null, $metric = null){
+		if (!$last_saved_date){
+			$last_saved_date = 'yesterday';
+		}
+		$date_ranges = self::set_date_ranges( $last_saved_date, 'yesterday' );
+
+		if ( empty( $metric ) ) {
+			$metric = 'ga:users';
+		} else {
+			$metric = 'ga:' . $metric;
+		}
+		$reports_requests	 = array();
+		$reports_requests[]	 = array(
+			'viewId'			 => $id_view,
+			'dateRanges'		 => $date_ranges,
+			'metrics'			 => self::set_metrics( $metric ),
+			'includeEmptyRows'	 => true,
+			'dimensions'		 => self::set_dimensions( 'ga:date' )
+		);
+		$query				 = array(
+			'reportRequests' => $reports_requests
+		);
+
+		return $query;
+
 	}
 
 	/**
@@ -469,6 +498,32 @@ class Ga_Stats {
 
 		return $chart_data;
 	}
+
+	/**
+	 * Get report from response data
+	 *
+	 * @param array $response_data Analytics response data
+	 *
+	 * @return array report data
+	 */
+	public static function get_report( $response_data ) {
+		$report_data = array();
+		if ( !empty( $response_data ) ) {
+			$data	 = (!empty( $response_data[ 'reports' ] ) && !empty( $response_data[ 'reports' ][ 0 ] ) && !empty( $response_data[ 'reports' ][ 0 ][ 'data' ] ) ) ? $response_data[ 'reports' ][ 0 ][ 'data' ] : array();
+			$rows	 = (!empty( $data[ 'rows' ] ) ) ? $data[ 'rows' ] : array();
+			if ( !empty( $rows ) ) {
+				foreach ( $rows as $key => $row ) {
+					$report_data[ $key ][ 'day' ]		= date( 'M j', strtotime( $row[ 'dimensions' ][ 0 ] ) );
+					$report_data[ $key ][ 'value' ]	 	= !empty( $row[ 'metrics' ][ 0 ][ 'values' ][ 0 ] ) ? $row[ 'metrics' ][ 0 ][ 'values' ][ 0 ] : 0;
+					$report_data[ $key ][ 'date' ]		= strtotime( $row[ 'dimensions' ][ 0 ] );
+				}
+			}
+		}
+
+		return $report_data;
+	}
+
+
 
 	/**
 	 * Get dasboard chart from response data

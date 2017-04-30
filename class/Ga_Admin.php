@@ -3,14 +3,15 @@
 class Ga_Admin
 {
 
-    const GA_WEB_PROPERTY_ID_OPTION_NAME = 'googleanalytics_web_property_id';
+    //stores the selected account id
     const GA_EXCLUDE_ROLES_OPTION_NAME = 'googleanalytics_exclude_roles';
     const GA_HIDE_TERMS_OPTION_NAME = 'googleanalytics_hide_terms';
     const GA_VERSION_OPTION_NAME = 'googleanalytics_version';
-    const GA_SELECTED_ACCOUNT = 'googleanalytics_selected_account';
     const GA_OAUTH_AUTH_CODE_OPTION_NAME = 'googleanalytics_oauth_auth_code';
+    //stores the access token and the refresh token
     const GA_OAUTH_AUTH_TOKEN_OPTION_NAME = 'googleanalytics_oauth_auth_token';
     const GA_ACCOUNT_DATA_OPTION_NAME = 'googleanalytics_account_data';
+    //manually not used
     const GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME           = 'googleanalytics_web_property_id_manually';
     const GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME  = 'googleanalytics_web_property_id_manually_value';
     const MIN_WP_VERSION = '3.8';
@@ -19,6 +20,9 @@ class Ga_Admin
     const NOTICE_ERROR = 'error';
     const GA_HEARTBEAT_API_CACHE_UPDATE = false;
 
+    const GA_ACCOUNT_AND_DATA_ARRAY = 'googleanalytics_accounts_and_data';
+    const GA_SELECTED_VIEWS = 'googleanalytics_selected_views';
+
     /**
      * Instantiate API client.
      *
@@ -26,18 +30,7 @@ class Ga_Admin
      */
     public static function api_client($type = '')
     {
-
         $instance = Ga_Lib_Google_Api_Client::get_instance();
-        $token = Ga_Helper::get_option(self::GA_OAUTH_AUTH_TOKEN_OPTION_NAME);
-        try {
-            if (!empty($token)) {
-                $token = json_decode($token, true);
-                $instance->set_access_token($token);
-            }
-        } catch (Exception $e) {
-            Ga_Helper::ga_oauth_notice($e->getMessage());
-        }
-
         return $instance;
     }
 
@@ -47,14 +40,14 @@ class Ga_Admin
 
     public static function activate_googleanalytics()
     {
-        add_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME, Ga_Helper::GA_DEFAULT_WEB_ID);
         add_option(self::GA_EXCLUDE_ROLES_OPTION_NAME, wp_json_encode(array()));
+        add_option(self::GA_ACCOUNT_AND_DATA_ARRAY, wp_json_encode(array()));
+        add_option(self::GA_SELECTED_VIEWS, wp_json_encode(array()));
         add_option(self::GA_HIDE_TERMS_OPTION_NAME, false);
         add_option(self::GA_VERSION_OPTION_NAME);
         add_option(self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
         add_option(self::GA_OAUTH_AUTH_TOKEN_OPTION_NAME);
         add_option(self::GA_ACCOUNT_DATA_OPTION_NAME);
-        add_option(self::GA_SELECTED_ACCOUNT);
         add_option(self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
         add_option(self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
         Ga_Cache::add_cache_options();
@@ -66,12 +59,12 @@ class Ga_Admin
 
     public static function deactivate_googleanalytics()
     {
-        delete_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME);
         delete_option(self::GA_EXCLUDE_ROLES_OPTION_NAME);
+        delete_option(self::GA_ACCOUNT_AND_DATA_ARRAY);
+        delete_option(self::GA_SELECTED_VIEWS);
         delete_option(self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
         delete_option(self::GA_OAUTH_AUTH_TOKEN_OPTION_NAME);
         delete_option(self::GA_ACCOUNT_DATA_OPTION_NAME);
-        delete_option(self::GA_SELECTED_ACCOUNT);
         delete_option(self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
         delete_option(self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
         Ga_Cache::delete_cache_options();
@@ -119,8 +112,33 @@ class Ga_Admin
         update_option(self::GA_VERSION_OPTION_NAME, GOOGLEANALYTICS_VERSION);
     }
 
+    public static function preupdate_selected_views($new_value, $old_value)
+    {
+        $data = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, array()));
+        foreach ($data as $account_email => $account){
+            foreach($account->account_summaries as $account_summary){
+                foreach ($account_summary->webProperties as $property){
+                    foreach ($property->profiles as $profile){
+                        if (array_key_exists($profile->id, $new_value)){
+                            $profile->include_in_stats = true;
+                        } else {
+                            $profile->include_in_stats = false;
+                        }
+                    }
+                }
+            }
+        }
+        update_option(self::GA_ACCOUNT_AND_DATA_ARRAY, json_encode($data));
+
+
+        return wp_json_encode($new_value);
+    }
+
     public static function preupdate_exclude_roles($new_value, $old_value)
     {
+
+        print_r($new_value);
+        update_option("test", json_encode($new_value));
         if (!Ga_Helper::are_features_enabled()) {
             return '';
         }
@@ -164,14 +182,13 @@ class Ga_Admin
      */
     public static function admin_init_googleanalytics()
     {
-        register_setting(GA_NAME, self::GA_WEB_PROPERTY_ID_OPTION_NAME);
         register_setting(GA_NAME, self::GA_EXCLUDE_ROLES_OPTION_NAME);
-        register_setting(GA_NAME, self::GA_SELECTED_ACCOUNT);
+        register_setting(GA_NAME, self::GA_SELECTED_VIEWS);
         register_setting(GA_NAME, self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
         register_setting(GA_NAME, self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
         register_setting(GA_NAME, self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
         add_filter('pre_update_option_' . Ga_Admin::GA_EXCLUDE_ROLES_OPTION_NAME, 'Ga_Admin::preupdate_exclude_roles', 1, 2);
-        add_filter('pre_update_option_' . Ga_Admin::GA_SELECTED_ACCOUNT, 'Ga_Admin::preupdate_selected_account', 1, 2);
+        add_filter('pre_update_option_' . Ga_Admin::GA_SELECTED_VIEWS, 'Ga_Admin::preupdate_selected_views', 1, 2);
     }
 
     /**
@@ -180,33 +197,32 @@ class Ga_Admin
     public static function admin_menu_googleanalytics()
     {
         if (current_user_can('manage_options')) {
-            add_menu_page('DTools Analytics', 'DTools Analytics', 'manage_options', 'googleanalytics', 'Ga_Admin::statistics_page_googleanalytics', 'dashicons-chart-line', 1000);
-            add_submenu_page('googleanalytics', 'DTools Analytics', __('Dashboard'), 'manage_options', 'googleanalytics', 'Ga_Admin::statistics_page_googleanalytics');
-            add_submenu_page('googleanalytics', 'DTools Analytics', __('Settings'), 'manage_options', 'googleanalytics/settings', 'Ga_Admin::options_page_googleanalytics');
+            add_submenu_page('options-general.php', __( 'Analytics (DT)', 'disciple_tools' ),
+            __( 'Analytics (DT)', 'disciple_tools' ), 'manage_options', 'googleanalytics/settings', 'Ga_Admin::options_page_googleanalytics' );
         }
     }
 
     /**
      * Prepares and displays plugin's stats page.
      */
-    public static function statistics_page_googleanalytics()
-    {
-
-        if (!Ga_Helper::is_wp_version_valid() || !Ga_Helper::is_php_version_valid()) {
-            return false;
-        }
-
-        $data = self::get_stats_page();
-        Ga_View_Core::load('statistics', array(
-            'data' => $data
-        ));
-
-        if (Ga_Cache::is_data_cache_outdated('', Ga_Helper::get_account_id())) {
-            self::api_client()->add_own_error('1', _('Saved data is shown, it will be refreshed soon'), 'Ga_Data_Outdated_Exception');
-        }
-
-        self::display_api_errors();
-    }
+//    public static function statistics_page_googleanalytics()
+//    {
+//
+//        if (!Ga_Helper::is_wp_version_valid() || !Ga_Helper::is_php_version_valid()) {
+//            return false;
+//        }
+//
+//        $data = self::get_stats_page();
+//        Ga_View_Core::load('statistics', array(
+//            'data' => $data
+//        ));
+//
+//        if (Ga_Cache::is_data_cache_outdated('', Ga_Helper::get_account_id())) {
+//            self::api_client()->add_own_error('1', _('Saved data is shown, it will be refreshed soon'), 'Ga_Data_Outdated_Exception');
+//        }
+//
+//        self::display_api_errors();
+//    }
 
     /**
      * Prepares and displays plugin's settings page.
@@ -224,32 +240,21 @@ class Ga_Admin
          * @var array $data
          */
         $data = array();
+        $data[self::GA_ACCOUNT_AND_DATA_ARRAY] = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, "[]"), true);
 
-        $data[self::GA_WEB_PROPERTY_ID_OPTION_NAME] = get_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME);
-        $data[self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME] = get_option(self::GA_WEB_PROPERTY_ID_MANUALLY_VALUE_OPTION_NAME);
-        $data[self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME] = get_option(self::GA_WEB_PROPERTY_ID_MANUALLY_OPTION_NAME);
-
-        $roles = Ga_Helper::get_user_roles();
-        $saved = json_decode(get_option(self::GA_EXCLUDE_ROLES_OPTION_NAME), true);
-
-        $tmp = array();
-        if (!empty($roles)) {
-            foreach ($roles as $role) {
-                $role_id = Ga_Helper::prepare_role_id($role);
-                $tmp[] = array(
-                    'name' => $role,
-                    'id' => $role_id,
-                    'checked' => (!empty($saved[$role_id]) && $saved[$role_id] === 'on')
-                );
-            }
+        foreach ($data[self::GA_ACCOUNT_AND_DATA_ARRAY] as $account_email => $account){
+            if(!Ga_Helper::is_authorized($account['token'])){
+                foreach($account['account_summaries'] as $account_summary){
+                    $account_summary['reauth'] = true;
+//                    foreach ($account_summary->webProperties as $property){
+//                        foreach ($property->profiles as $profile){
+//                        }
+//                    }
+                }
+            };
         }
-        $data['roles'] = $tmp;
+        $data['popup_url'] = self::get_auth_popup_url();
 
-        if (Ga_Helper::is_authorized()) {
-            $data['ga_accounts_selector'] = self::get_accounts_selector();
-        } else {
-            $data['popup_url'] = self::get_auth_popup_url();
-        }
         if (!empty($_GET['err'])) {
             switch ($_GET['err']) {
                 case 1:
@@ -362,23 +367,23 @@ class Ga_Admin
      *
      * @return string HTML code
      */
-    public static function get_stats_page()
-    {
-        $chart = null;
-        $boxes = null;
-        $labels = null;
-        $sources = null;
-        if (Ga_Helper::is_authorized() && Ga_Helper::is_account_selected() && !Ga_Helper::is_all_feature_disabled()) {
-            list($chart, $boxes, $labels, $sources) = self::generate_stats_data();
-        }
-
-        return Ga_Helper::get_chart_page('stats', array(
-            'chart' => $chart,
-            'boxes' => $boxes,
-            'labels' => $labels,
-            'sources' => $sources
-        ));
-    }
+//    public static function get_stats_page()
+//    {
+//        $chart = null;
+//        $boxes = null;
+//        $labels = null;
+//        $sources = null;
+//        if (Ga_Helper::is_authorized() && Ga_Helper::is_account_selected() && !Ga_Helper::is_all_feature_disabled()) {
+//            list($chart, $boxes, $labels, $sources) = self::generate_stats_data();
+//        }
+//
+//        return Ga_Helper::get_chart_page('stats', array(
+//            'chart' => $chart,
+//            'boxes' => $boxes,
+//            'labels' => $labels,
+//            'sources' => $sources
+//        ));
+//    }
 
     /**
      * Shows plugin's notice on the admin area.
@@ -393,12 +398,12 @@ class Ga_Admin
     /**
      * Adds GA dashboard widget only for administrators.
      */
-    public static function add_dashboard_device_widget()
-    {
-        if (Ga_Helper::is_administrator()) {
-            wp_add_dashboard_widget('ga_dashboard_widget', __('Google Analytics Dashboard'), 'Ga_Helper::add_ga_dashboard_widget');
-        }
-    }
+//    public static function add_dashboard_device_widget()
+//    {
+//        if (Ga_Helper::is_administrator()) {
+//            wp_add_dashboard_widget('ga_dashboard_widget', __('Google Analytics Dashboard'), 'Ga_Helper::add_ga_dashboard_widget');
+//        }
+//    }
 
     /**
      * Adds plugin's actions
@@ -408,7 +413,7 @@ class Ga_Admin
         add_action('admin_init', 'Ga_Admin::admin_init_googleanalytics');
         add_action('admin_menu', 'Ga_Admin::admin_menu_googleanalytics');
         add_action('admin_enqueue_scripts', 'Ga_Admin::enqueue_scripts');
-        add_action('wp_dashboard_setup', 'Ga_Admin::add_dashboard_device_widget');
+//        add_action('wp_dashboard_setup', 'Ga_Admin::add_dashboard_device_widget');
         add_action('wp_ajax_ga_ajax_data_change', 'Ga_Admin::ga_ajax_data_change');
         add_action('heartbeat_tick', 'Ga_Admin::run_heartbeat_jobs');
     }
@@ -461,7 +466,7 @@ class Ga_Admin
 
         $code = Ga_Helper::get_option(self::GA_OAUTH_AUTH_CODE_OPTION_NAME);
 
-        if (!Ga_Helper::is_authorized() && !empty($code)) {
+        if (!empty($code)) {
             Ga_Helper::update_option(self::GA_OAUTH_AUTH_CODE_OPTION_NAME, "");
 
             // Get access token
@@ -470,14 +475,14 @@ class Ga_Admin
                 return false;
             }
             $param = '';
-            if (!self::save_access_token($response)) {
+
+            $token = self::parse_access_token($response);
+            if (empty($token)) {
                 $param = '&err=1';
             } else {
-                self::api_client()->set_access_token($response->getData());
+                $account_summaries = self::api_client()->call('ga_api_account_summaries', array($token));
 
-                // Get accounts data
-                $account_summaries = self::api_client()->call('ga_api_account_summaries');
-                self::save_ga_account_summaries($account_summaries->getData());
+                self::save_accounts($token, $account_summaries->getData());
             }
 
             wp_redirect(admin_url(Ga_Helper::GA_SETTINGS_PAGE_URL . $param));
@@ -485,40 +490,18 @@ class Ga_Admin
     }
 
     /**
-     * Save access token.
-     *
-     * @param Ga_Lib_Api_Response $response
-     *
-     * @return boolean
+     * Save analytics accounts data
+     * @param $token
+     * @param $account_summaries
      */
-    public static function save_access_token($response, $refresh_token = '')
-    {
-        $access_token = $response->getData();
-        if (!empty($access_token)) {
-            $access_token['created'] = time();
-        } else {
-            return false;
-        }
-
-        if (!empty($refresh_token)) {
-            $access_token['refresh_token'] = $refresh_token;
-        }
-
-        return update_option(self::GA_OAUTH_AUTH_TOKEN_OPTION_NAME, wp_json_encode($access_token));
-    }
-
-    /**
-     * Saves Google Analytics account data.
-     *
-     * @param $data
-     *
-     * @return array
-     */
-    public static function save_ga_account_summaries($data)
-    {
+    public static function save_accounts($token, $account_summaries){
+        $array = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, array()), true);
         $return = array();
-        if (!empty($data['items'])) {
-            foreach ($data['items'] as $item) {
+        $return['token'] = $token;
+        $return['account_summaries'] = array();
+
+        if (!empty($account_summaries['items'])) {
+            foreach ($account_summaries['items'] as $item) {
                 $tmp = array();
                 $tmp['id'] = $item['id'];
                 $tmp['name'] = $item['name'];
@@ -541,16 +524,49 @@ class Ga_Admin
                         );
                     }
                 }
-
-                $return[] = $tmp;
+                $return['account_summaries'][] = $tmp;
             }
 
-            update_option(self::GA_ACCOUNT_DATA_OPTION_NAME, wp_json_encode($return));
-            update_option(self::GA_WEB_PROPERTY_ID_OPTION_NAME, "");
+            $array[$account_summaries['username']] = $return;
+            update_option(self::GA_ACCOUNT_AND_DATA_ARRAY, json_encode($array));
         }
 
-        return $return;
     }
+
+
+    public static function parse_access_token($response, $refresh_token = '')
+    {
+        $access_token = $response->getData();
+        if (!empty($access_token)) {
+            $access_token['created'] = time();
+        } else {
+            return false;
+        }
+
+        if (!empty($refresh_token)) {
+            $access_token['refresh_token'] = $refresh_token;
+        }
+        return $access_token;
+
+    }
+
+    public static function save_access_token($response, $token){
+        if (isset($token['account_id'])){
+            $new_token = self::parse_access_token($response);
+            $array = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, array()), true);
+            foreach($array as $email => $account){
+                foreach($account['account_summaries'] as $account_summary){
+                    if ($account_summary['id'] === $token["account_id"]){
+                        $account['token'] = $new_token;
+                    }
+                }
+            }
+            update_option(self::GA_ACCOUNT_AND_DATA_ARRAY, json_encode($array));
+            return $new_token;
+        }
+    }
+
+
 
     /**
      * Handle AJAX data for the GA dashboard widget.
@@ -609,4 +625,49 @@ class Ga_Admin
         return array($chart, $boxes, $labels, $sources);
     }
 
+
+    public static function get_report_data($last_report){
+
+        $data = json_decode(get_option(self::GA_ACCOUNT_AND_DATA_ARRAY, "[]"), true);
+        $selected_views = array();
+
+        $website_unique_visits = array();
+        foreach ($data as $account_email => $account){
+            foreach($account['account_summaries'] as $account_summary){
+                $account_summary['reauth'] = true;
+                foreach ($account_summary['webProperties'] as $property){
+                    foreach ($property['profiles'] as $profile){
+                        if (isset($profile['include_in_stats']) && $profile['include_in_stats']==true){
+                            $selected_views[] = array(
+                                'account_id'		=> $account_summary['id'],
+                                'web_property_id'	=> $property['webPropertyId'],
+                                'view_id'			=> $profile['id'],
+                                'token'             => $account['token'],
+                                'url'               => $property['name']
+                            );
+                        }
+                    }
+                }
+            };
+        }
+
+        $last_report = new DateTime($last_report);
+        $today = new DateTime();
+        $interval = $last_report->diff($today);
+
+        $datys_ago = $interval->format('%adaysago');
+
+        foreach($selected_views as $selected){
+            $query_params = Ga_Stats::get_query('report', $selected['view_id'], $datys_ago);
+            $query_params['token'] = $selected['token'];
+            $query_params['token']['account_id'] = $selected['account_id'];
+            $stats_data = self::api_client()->call('ga_api_data', array(
+                $query_params
+            ));
+            $report = !empty($stats_data) ? Ga_Stats::get_report($stats_data->getData()) : array();
+            $website_unique_visits[$selected['url']] = $report;
+        }
+
+        return $website_unique_visits;
+    }
 }

@@ -12,7 +12,12 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
     const GA_DATA_ENDPOINT                          = 'https://analyticsreporting.googleapis.com/v4/reports:batchGet';
 	const OAUTH2_CALLBACK_URI                       = 'urn:ietf:wg:oauth:2.0:oob';
 
-	const USE_CACHE = true;
+	const USE_CACHE = true;/**
+ * Created by IntelliJ IDEA.
+ * User: jd
+ * Date: 4/17/17
+ * Time: 3:56 PM
+ */
 
 	private $disable_cache = false;
 
@@ -43,7 +48,7 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 	 *
 	 * @var array
 	 */
-	private $token;
+//	private $token;
 
 	private function __construct() {
 	}
@@ -88,14 +93,14 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 		}
 	}
 
-	/**
-	 * Sets access token.
-	 *
-	 * @param $token
-	 */
-	public function set_access_token( $token ) {
-		$this->token = $token;
-	}
+//	/**
+//	 * Sets access token.
+//	 *
+//	 * @param $token
+//	 */
+//	public function set_access_token( $token ) {
+//		$this->token = $token;
+//	}
 
 	/**
 	 * Returns Google Oauth2 redirect URL.
@@ -179,9 +184,16 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 	 *
 	 * @return Ga_Lib_Api_Response Returns response object
 	 */
-	private function ga_api_account_summaries() {
+
+	/**
+	 * @param $token1, array()
+	 * @return Ga_Lib_Api_Response
+	 * @throws Ga_Lib_Api_Client_Exception
+	 * @throws Ga_Lib_Google_Api_Client_AccountSummaries_Exception
+	 */
+	private function ga_api_account_summaries($token) {
 		$request  = Ga_Lib_Api_Request::get_instance();
-		$request  = $this->sign( $request );
+		$request  = $this->sign( $request, $token );
 		try {
 		$response = $request->make_request( self::GA_ACCOUNT_SUMMARIES_ENDPOINT, null, false, true );
 		} catch (Ga_Lib_Api_Request_Exception $e) {
@@ -198,9 +210,12 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 	 *
 	 * @return Ga_Lib_Api_Response Returns response object
 	 */
-	private function ga_api_data( $query_params ) {
-		$request           = Ga_Lib_Api_Request::get_instance( $this->is_cache_enabled(), Ga_Helper::get_account_id() );
-		$request           = $this->sign( $request );
+	private function ga_api_data( $query_params) {
+		$token = $query_params['token'];
+		$request           = Ga_Lib_Api_Request::get_instance( $this->is_cache_enabled(), $token['account_id'] );
+		$request           = $this->sign( $request, $token );
+		unset($query_params['token']);
+
 		$current_user      = wp_get_current_user();
 		$quota_user_string = '';
 		if ( ! empty( $current_user ) ) {
@@ -214,7 +229,6 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 		} catch ( Ga_Lib_Api_Request_Exception $e ) {
 			throw new Ga_Lib_Google_Api_Client_Data_Exception( $e->getMessage() );
 		}
-
 		return new Ga_Lib_Api_Response( $response );
 	}
 
@@ -227,17 +241,19 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 	 * @return Ga_Lib_Api_Request Returns response object
 	 * @throws Ga_Lib_Api_Client_Exception
 	 */
-	private function sign( Ga_Lib_Api_Request $request ) {
-		if ( empty( $this->token ) ) {
+	private function sign( Ga_Lib_Api_Request $request, $token ) {
+		if ( empty( $token ) ) {
 			throw new Ga_Lib_Api_Client_Exception( 'Access Token is not available. Please reauthenticate' );
 		}
 
 		// Check if the token is set to expire in the next 30 seconds
 		// (or has already expired).
-		$this->check_access_token();
-
+		$new_token = $this->check_access_token($token);
+		if ($new_token){
+			$token = $new_token;
+		}
 		// Add the OAuth2 header to the request
-		$request->set_request_headers( array( 'Authorization: Bearer ' . $this->token['access_token'] ) );
+		$request->set_request_headers( array( 'Authorization: Bearer ' . $token['access_token'] ) );
 
 		return $request;
 	}
@@ -247,26 +263,24 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 	 *
 	 * @param $refresh_token
 	 */
-	public function refresh_access_token( $refresh_token ) {
+	public function refresh_access_token( $token ) {
 		// Request for a new Access Token
-		$response = $this->call_api_method( 'ga_auth_refresh_access_token', array( $refresh_token ) );
+		$response = $this->call_api_method( 'ga_auth_refresh_access_token', array( $token['refresh_token'] ) );
 
-		Ga_Admin::save_access_token( $response, $refresh_token );
-
-		// Set new access token
-		$token = Ga_Helper::get_option( Ga_Admin::GA_OAUTH_AUTH_TOKEN_OPTION_NAME );
-		$this->set_access_token( json_decode( $token, true ) );
+		return Ga_Admin::save_access_token( $response, $token );
 	}
+
+
 
 	/**
 	 * Checks if Access Token is valid.
 	 *
 	 * @return bool
 	 */
-	public function is_authorized() {
-		if ( ! empty( $this->token ) ) {
+	public function is_authorized($token) {
+		if ( ! empty( $token->access_token ) ) {
 			try {
-				$this->check_access_token();
+				$this->check_access_token($token);
 			} catch ( Ga_Lib_Api_Client_Exception $e ) {
 				$this->add_error( $e );
 			} catch ( Exception $e ) {
@@ -274,32 +288,33 @@ class Ga_Lib_Google_Api_Client extends Ga_Lib_Api_Client {
 			}
 		}
 
-		return ! empty( $this->token ) && ! $this->is_access_token_expired();
+		return ! empty( $token ) && ! $this->is_access_token_expired($token);
 	}
 
 	/**
 	 * Returns if the access_token is expired.
 	 * @return bool Returns True if the access_token is expired.
 	 */
-	public function is_access_token_expired() {
-		if ( null == $this->token ) {
+	public function is_access_token_expired($token) {
+		if ( null == $token ) {
 			return true;
 		}
-		if ( ! empty( $this->token['error'] ) ) {
+		if ( ! empty( $token->error ) ) {
 			return true;
 		}
+
 		// Check if the token is expired in the next 30 seconds.
-		$expired = ( $this->token['created'] + ( $this->token['expires_in'] - 30 ) ) < time();
+		$expired = ( $token['created'] + ( $token['expires_in'] - 30 ) ) < time();
 
 		return $expired;
 	}
 
-	private function check_access_token() {
-		if ( $this->is_access_token_expired() ) {
-			if ( empty( $this->token['refresh_token'] ) ) {
+	private function check_access_token($token) {
+		if ( $this->is_access_token_expired($token) ) {
+			if ( empty( $token['refresh_token'] ) ) {
 				throw new Ga_Lib_Api_Client_Exception( _( 'Refresh token is not available. Please re-authenticate.' ) );
 			} else {
-				$this->refresh_access_token( $this->token['refresh_token'] );
+				return $this->refresh_access_token( $token );
 			}
 		}
 	}

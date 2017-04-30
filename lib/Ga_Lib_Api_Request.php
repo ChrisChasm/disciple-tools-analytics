@@ -62,20 +62,19 @@ class Ga_Lib_Api_Request {
 	public function make_request( $url, $rawPostBody = null, $json = false, $force_no_cache = false) {
 
 		// Return cached data if exist
+		$wp_transient_name = Ga_Cache::get_transient_name( $url, $rawPostBody, $this->appendix );
 		if ( ! $force_no_cache ) {
-		if ( $this->cache ) {
-				$wp_transient_name = Ga_Cache::get_transient_name( $url, $rawPostBody, $this->appendix );
-
-			if ( $cached = Ga_Cache::get_cached_result( $wp_transient_name ) ) {
+			if ( $this->cache ) {
+				if ( $cached = Ga_Cache::get_cached_result( $wp_transient_name ) ) {
 					if ( ! Ga_Cache::is_data_cache_outdated( $wp_transient_name, $this->appendix ) ) {
-				return $cached;
-			}
-			}
+						return $cached;
+					}
+				}
 
 				// Check if the next request after error is allowed
 				if ( false === Ga_Cache::is_next_request_allowed( $wp_transient_name ) ) {
-				throw new Ga_Lib_Api_Client_Exception( _( 'There are temporary connection issues, please try again later.' ) );
-			}
+					throw new Ga_Lib_Api_Client_Exception( _( 'There are temporary connection issues, please try again later.' ) );
+				}
 			}
 		}
 
