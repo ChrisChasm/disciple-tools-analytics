@@ -64,29 +64,7 @@ class Ga_Admin
         delete_option(self::GA_VERSION_OPTION_NAME);
     }
 
-    /**
-     * Do actions during plugin load.
-     */
-    public static function loaded_googleanalytics()
-    {
-//        self::update_googleanalytics();
-    }
 
-//    /**
-//     * Update hook fires when plugin is being loaded.
-//     */
-//    public static function update_googleanalytics()
-//    {
-//
-//        $version = get_option(self::GA_VERSION_OPTION_NAME);
-//        $installed_version = get_option(self::GA_VERSION_OPTION_NAME, '1.0.7');
-//        $old_property_value = Ga_Helper::get_option('web_property_id');
-//        if (version_compare($installed_version, GOOGLEANALYTICS_VERSION, 'eq')) {
-//            return;
-//        }
-//
-//        update_option(self::GA_VERSION_OPTION_NAME, GOOGLEANALYTICS_VERSION);
-//    }
 
     public static function preupdate_selected_views($new_value, $old_value)
     {
@@ -238,14 +216,11 @@ class Ga_Admin
      */
     public static function enqueue_scripts()
     {
-        if (Ga_Helper::is_dashboard_page() || Ga_Helper::is_plugin_page()) {
+        if (Ga_Helper::is_plugin_page()) {
             wp_register_script(GA_NAME . '-js', GA_PLUGIN_URL . '/js/' . GA_NAME . '.js', array(
                 'jquery'
             ));
             wp_enqueue_script(GA_NAME . '-js');
-
-            wp_register_script('googlecharts', 'https://www.gstatic.com/charts/loader.js', null, null, false);
-            wp_enqueue_script('googlecharts');
 
             self::enqueue_ga_css();
         }

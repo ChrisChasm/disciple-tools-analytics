@@ -49,5 +49,4 @@ include_once GA_PLUGIN_DIR . 'class/Ga_Autoloader.php';
 Ga_Autoloader::register();
 Ga_Hook::add_hooks( GA_MAIN_FILE_PATH );
 
-add_action( 'plugins_loaded', 'Ga_Admin::loaded_googleanalytics' );
 add_action( 'init', 'Ga_Helper::init' );
