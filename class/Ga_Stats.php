@@ -513,9 +513,9 @@ class Ga_Stats {
 			$rows	 = (!empty( $data[ 'rows' ] ) ) ? $data[ 'rows' ] : array();
 			if ( !empty( $rows ) ) {
 				foreach ( $rows as $key => $row ) {
-					$report_data[ $key ][ 'day' ]		 = date( 'M j', strtotime( $row[ 'dimensions' ][ 0 ] ) );
-					$report_data[ $key ][ 'value' ]	 = !empty( $row[ 'metrics' ][ 0 ][ 'values' ][ 0 ] ) ? $row[ 'metrics' ][ 0 ][ 'values' ][ 0 ] : 0;
-					$report_data[ $key ]['date' ]					 = strtotime( $row[ 'dimensions' ][ 0 ] );
+					$report_data[ $key ][ 'day' ]		= date( 'M j', strtotime( $row[ 'dimensions' ][ 0 ] ) );
+					$report_data[ $key ][ 'value' ]	 	= !empty( $row[ 'metrics' ][ 0 ][ 'values' ][ 0 ] ) ? $row[ 'metrics' ][ 0 ][ 'values' ][ 0 ] : 0;
+					$report_data[ $key ][ 'date' ]		= strtotime( $row[ 'dimensions' ][ 0 ] );
 				}
 			}
 		}

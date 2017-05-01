@@ -342,8 +342,6 @@ class Ga_Admin
                 $param = '&err=1';
             } else {
                 $account_summaries = self::api_client()->call('ga_api_account_summaries', array($token));
-                update_option("ga_test", json_encode($token));
-                update_option("ga_test2", json_encode($account_summaries->getData()));
 
                 self::save_accounts($token, $account_summaries->getData());
             }
